@@ -395,14 +395,14 @@ def parse_changes_analysis(wb):
 
     # 构建分析
     parts = []
+    parts.append('▶ 人员变动分析：')
     if key_hire_depts:
         dept_str = '、'.join(sorted(key_hire_depts))
-        parts.append(f'入职：本月{dept_str}等三级部门入职了关键岗位员工。')
+        parts.append(f'  入职：本月{dept_str}等三级部门入职了关键岗位员工。')
     else:
-        parts.append(f'入职：本月无关键岗位入职。')
-
-    parts.append('离职：后续补充')
-    parts.append('调动：后续补充')
+        parts.append(f'  入职：本月无关键岗位入职。')
+    parts.append('  离职：后续补充')
+    parts.append('  调动：后续补充')
 
     return '\n'.join(parts)
 
