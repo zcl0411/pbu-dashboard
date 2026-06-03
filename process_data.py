@@ -397,13 +397,9 @@ def parse_changes_analysis(wb):
     parts = []
     if key_hire_depts:
         dept_str = '、'.join(sorted(key_hire_depts))
-        parts.append(
-            f'入职：本月{dept_str}等三级部门入职了关键岗位员工'
-            f'（取数口径：数据源-编制表，领色为非蓝领，岗位状态为在职，入职日期在{month_start.month}/1及之后，ABC分类为A/B）。')
+        parts.append(f'入职：本月{dept_str}等三级部门入职了关键岗位员工。')
     else:
-        parts.append(
-            f'入职：本月无关键岗位入职'
-            f'（取数口径：数据源-编制表，领色为非蓝领，岗位状态为在职，入职日期在{month_start.month}/1及之后，ABC分类为A/B）。')
+        parts.append(f'入职：本月无关键岗位入职。')
 
     parts.append('离职：后续补充')
     parts.append('调动：后续补充')
