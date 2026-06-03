@@ -14,8 +14,8 @@ from pathlib import Path
 import process_data
 
 def embed_data(month_label):
-    """将 data/{month}.json 嵌入到 dashboard.html 中"""
-    html_path = Path(__file__).parent / "dashboard.html"
+    """将 data/{month}.json 嵌入到 index.html 中"""
+    html_path = Path(__file__).parent / "index.html"
     data_path = Path(__file__).parent / "data" / f"{month_label}.json"
     months_path = Path(__file__).parent / "data" / "months.json"
 
@@ -64,7 +64,7 @@ def embed_data(month_label):
     if cnt != 1:
         print(f"[警告] EMBED_DATA 声明了 {cnt} 次，可能有残留数据")
     else:
-        print(f"[OK] 数据已嵌入 dashboard.html")
+        print(f"[OK] 数据已嵌入 index.html")
 
     with open(html_path, 'w', encoding='utf-8') as f:
         f.write(html)
@@ -76,7 +76,7 @@ def git_push(month_label):
     script_dir = Path(__file__).parent
     os.chdir(str(script_dir))
 
-    subprocess.run(['git', 'add', 'dashboard.html', 'data/'], check=False)
+    subprocess.run(['git', 'add', 'index.html', 'data/'], check=False)
     subprocess.run(['git', 'commit', '-m',
                    f'Update dashboard data: {month_label}'], check=False)
     subprocess.run(['git', 'push'], check=False)
