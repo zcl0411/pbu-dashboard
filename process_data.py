@@ -299,6 +299,52 @@ def parse_improvements(ws):
     return {"四月": april_data}
 
 
+def parse_vacancy_analysis(wb):
+    """从编制数据源表提取空编分析"""
+    from datetime import datetime
+    # Find 编制 source sheet
+    ws = None
+    for name in wb.sheetnames:
+        if '编制' in name and '编制表' not in name:
+            ws = wb[name]
+            break
+    if ws is None:
+        return None
+
+    vacant = 0
+    vacant_h2 = 0
+    for r in range(2, ws.max_row + 1):
+        status = str(ws.cell(r, 30).value or '').strip()  # C30=岗位状态
+        lingse = str(ws.cell(r, 34).value or '').strip()  # C34=领色
+        eta = ws.cell(r, 20).value                         # C20=预计到岗时间
+
+        if status == '空编' and lingse != '蓝领':
+            vacant += 1
+            if eta:
+                try:
+                    m = None
+                    if isinstance(eta, datetime):
+                        m = eta.month
+                    elif isinstance(eta, str) and eta.strip():
+                        for fmt in ['%Y-%m-%d', '%Y/%m/%d']:
+                            try:
+                                dt = datetime.strptime(eta[:10], fmt)
+                                m = dt.month
+                                break
+                            except:
+                                pass
+                    if m and m >= 6:
+                        vacant_h2 += 1
+                except:
+                    pass
+
+    return {
+        "空编总数": vacant,
+        "计划下半年到岗": vacant_h2,
+        "正常招聘中": vacant - vacant_h2,
+    }
+
+
 def parse_dashboard_sheet(filepath, month_str):
     """Main entry: parse the 组织能力月度看板 sheet"""
     wb = load_workbook(filepath)
@@ -324,6 +370,9 @@ def parse_dashboard_sheet(filepath, month_str):
     retention = parse_retention(ws)
     improvements = parse_improvements(ws)
 
+    # Parse vacancy analysis from 编制 source sheet
+    vacancy = parse_vacancy_analysis(wb)
+
     # Org chart text
     org_chart = ws["A12"].value or ""
 
@@ -340,6 +389,7 @@ def parse_dashboard_sheet(filepath, month_str):
         "personnel_changes": changes,
         "changes_analysis": changes_analysis,
         "retention": retention,
+        "vacancy": vacancy,
         "improvements": improvements,
     }
 
