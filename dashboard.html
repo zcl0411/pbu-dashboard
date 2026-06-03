@@ -177,6 +177,26 @@ function subCols(c){return c==='C'?['C','D','E']:c==='F'?['F','G']:c==='H'?['H',
 
 function prevEstabl(){const i=months.indexOf(currentMonth);if(i<=0)return null;const p=allData[months[i-1]];return p&&p.establishment?p.establishment.data:null}
 function prevActual(){const i=months.indexOf(currentMonth);if(i<=0)return null;const p=allData[months[i-1]];return p&&p.actual_headcount?p.actual_headcount.data:null}
+function prevMonthData(){const i=months.indexOf(currentMonth);if(i<=0)return null;return allData[months[i-1]]||null;}
+
+// 生成3.1编制数变动分析
+function genEstabAnalysis(d){
+  const prev=prevMonthData();
+  if(!prev||!prev.establishment)return '数据分析：暂无上月数据可供对比';
+  const currRow=d.establishment.data[0]; // 编制数 total row
+  const prevRow=prev.establishment.data[0];
+  if(!currRow||!prevRow)return '数据分析：数据异常';
+  let parts=[];
+  for(const c of so){const sc=subCols(c);for(const s of sc){
+    const cv=Number(currRow[s])||0, pv=Number(prevRow[s])||0;
+    if(cv===pv||pv===0)continue;
+    const name=dl[s]||s;
+    if(cv>pv)parts.push(name+'增编'+(cv-pv)+'个');
+    else parts.push(name+'缩编'+(pv-cv)+'个');
+  }}
+  if(!parts.length)return '数据分析：本月各三级部门编制数与上月一致，无变动。';
+  return '数据分析：与上月对比，'+parts.join('；')+'。请BP重点关注变动较大的部门，确认编制调整原因。';
+}
 
 function render(m){
   const d=allData[m];if(!d){document.getElementById('app').innerHTML='<div class="loading">未找到'+m+'数据</div>';return}
@@ -236,7 +256,8 @@ function renderOrg(d){
   return `<div style="text-align:center;padding:12px;background:#fafafa;border-radius:8px">
     <img src="org_chart.png" class="org-preview" onclick="previewImage(this)" alt="PBU组织架构图" title="点击预览大图">
     <p style="margin-top:8px;font-size:12px;color:#888">点击图片查看大图</p>
-  </div>`;
+  </div>
+  <div class="ana">PBU组织架构调整：内容后续再加上</div>`;
 }
 
 // ── 人才密度（3.1/3.2/3.3/3.4  Tab切换） ──
@@ -253,8 +274,8 @@ function renderDensity(d){
   // Tab 3.1
   h+='<div class="tc on" id="t31">';
   h+='<div class="subsec-title" style="margin-bottom:8px">3.1 各部门编制数展示（不含蓝领）</div>';
-  h+=renderEstabTable(d);
-  h+='<div class="ana">📌 分析方向：分析各国编制变动情况，如增编、缩编，通过上月明细数据对比，标色找BP确认编制变动原因</div>';
+  h+=renderEstabTable(d,prevMonthData());
+  h+='<div class="ana">'+genEstabAnalysis(d)+'</div>';
   h+='</div>';
 
   // Tab 3.2
@@ -335,9 +356,10 @@ function addCmpRow(data,prevFn){
   return r+'</tr>';
 }
 
-function renderEstabTable(d){
+function renderEstabTable(d,prevD){
   const data=d.establishment;const l3=data.level3_headers;
-  // 自定义表头（不含"类型"列）
+  const prev=prevD?prevD.establishment:null;
+  const prevRows=prev?prev.data:null;
   let h1='<tr><th rowspan="2" style="width:80px">分类</th>';
   let h2='<tr>';
   for(const c of so){const sc=subCols(c);h1+=`<th colspan="${sc.length}" class="hdr">${dn[c]}</th>`;for(const s of sc)h2+=`<th style="font-size:10px">${l3[s]||dl[s]}</th>`}
@@ -345,18 +367,23 @@ function renderEstabTable(d){
   let r='';
   for(const row of data.data){
     if(!row.label)continue;
+    // Find matching prev row (first by label match, then by type)
+    let prow=null;
+    if(prevRows){for(const p of prevRows){if(p.label===row.label&&p.type===row.type){prow=p;break}}}
     r+='<tr><td class="lb">'+row.label+'</td>';
-    for(const c of so){const sc=subCols(c);for(const s of sc)r+='<td>'+(row[s]!=null?fnum(row[s]):'-')+'</td>'}
+    for(const c of so){const sc=subCols(c);for(const s of sc){
+      const v=row[s];const pv=prow?prow[s]:null;
+      if(v==null){r+='<td>-</td>';continue}
+      // Compare with prev month for color
+      let cls='';
+      if(pv!=null&&v!==pv){
+        cls=v>pv?' style="background:#d4edda"'  // 绿色：本月 > 上月
+               :' style="background:#fff3cd"';   // 浅黄：本月 < 上月
+      }
+      r+=`<td${cls}>${fnum(v)}</td>`;
+    }}
     r+='</tr>';
   }
-  // 合计
-  r+='<tr style="font-weight:700;background:#f5f7fa"><td class="lb">合计</td>';
-  for(const c of so){const sc=subCols(c);for(const s of sc){
-    let t=0;for(const row of data.data){if(row.label&&row[s]!=null)t+=Number(row[s])}
-    r+=`<td>${t||'-'}</td>`;
-  }}
-  r+='</tr>';
-  r+=addCmpRow(data.data,prevEstabl);
   return `<table class="tbl"><thead>${h1}${h2}</thead><tbody>${r}</tbody></table>`;
 }
 
