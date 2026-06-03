@@ -240,17 +240,15 @@ function renderSummary(d){
 // ── 评估 ──
 function renderAssess(d){
   const dims=['组织能力','组织架构','人才密度','文化氛围'];
-  const cols=[{l:'PBU',k:'PBU'},{l:'欧洲一区',k:'欧洲一区',n:3,s:[{l:'丹麦',k:'丹麦区'},{l:'英国',k:'英国区'},{l:'荷兰',k:'荷兰区'}]},{l:'欧洲二区',k:'欧洲二区',n:2,s:[{l:'比利时',k:'比利时区'},{l:'法国',k:'法国区'}]},{l:'欧洲三区',k:'欧洲三区',n:3,s:[{l:'西班牙',k:'西班牙区'},{l:'意大利',k:'意大利区'},{l:'匈牙利',k:'匈牙利区'}]},{l:'澳洲区',k:'澳洲区'},{l:'日本区',k:'日本区'},{l:'北美区',k:'北美区'},{l:'四海捷运项目部',k:'四海捷运项目部'},{l:'经营管理部',k:'经营管理部'},{l:'销售客服部',k:'销售客服部'},{l:'交付运营部',k:'交付运营部'},{l:'PBU技术部',k:'PBU技术部'}];
-  let h='<table class="atbl"><thead><tr><th rowspan="2">评估维度</th>';
-  for(const c of cols){if(c.s){h+=`<th colspan="${c.n}">${c.l}</th>`}else h+=`<th rowspan="2">${c.l}</th>`}
-  h+='</tr><tr>';
-  for(const c of cols){if(c.s){for(const s of c.s)h+=`<th style="font-weight:400;font-size:10px">${s.l}</th>`}}
+  const cols=['PBU','欧洲一区','欧洲二区','欧洲三区','澳洲区','日本区','北美区','四海捷运项目部','经营管理部','销售客服部','交付运营部','PBU技术部'];
+  let h='<table class="atbl"><thead><tr><th>评估维度</th>';
+  for(const c of cols)h+=`<th>${c}</th>`;
   h+='</tr></thead><tbody>';
   for(const dim of dims){
     h+='<tr><td class="dl">'+dim+'</td>';
     for(const c of cols){
-      if(c.s){for(const s of c.s){const v=(d.assessment[dim]||{})[s.k]||'-';h+=`<td class="${v==='达标'?'pass':v==='不达标'?'fail':''}">${v}</td>`}}
-      else{const v=(d.assessment[dim]||{})[c.k]||'-';h+=`<td class="${v==='达标'?'pass':v==='不达标'?'fail':''}">${v}</td>`}
+      const v=(d.assessment[dim]||{})[c]||'-';
+      h+=`<td class="${v==='达标'?'pass':v==='不达标'?'fail':''}">${v}</td>`;
     }
     h+='</tr>';
   }
