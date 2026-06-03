@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PBU口岸事业部 - 组织能力月度看板</title>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:"Microsoft YaHei","PingFang SC",sans-serif;background:#f0f2f5;color:#333;line-height:1.6;min-width:900px}
+.header{background:linear-gradient(135deg,#1a237e,#283593);color:#fff;padding:16px 32px;display:flex;justify-content:space-between;align-items:center;gap:12px}
+.header h1{font-size:20px;font-weight:600}
+.month-selector{display:flex;align-items:center;gap:6px}
+.month-selector select{padding:6px 14px;border-radius:6px;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.12);color:#fff;font-size:13px;cursor:pointer;outline:none}
+.month-selector select option{color:#333}
+.month-nav button{width:30px;height:30px;border-radius:50%;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.1);color:#fff;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center}
+.month-nav button:hover{background:rgba(255,255,255,.25)}
+.container{max-width:1400px;margin:0 auto;padding:16px}
+
+/* 摘要 */
+.summary-cards{background:linear-gradient(135deg,#e8f0fe,#d4e4fc);border-radius:10px;padding:6px;margin-bottom:16px;box-shadow:0 2px 10px rgba(26,35,126,.06)}
+.summary-row{display:flex;flex-wrap:wrap;gap:0;align-items:stretch;border-radius:8px;overflow:hidden}
+.summary-row+.summary-row{margin-top:6px}
+.summary-item{flex:1;min-width:130px;padding:14px 8px 10px;text-align:center;background:#fff;transition:transform .15s}
+.summary-item:first-child{border-radius:8px 0 0 8px}
+.summary-item:last-child{border-radius:0 8px 8px 0}
+.summary-item:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,.1);z-index:1}
+.summary-item .sl{font-size:11px;color:#999;margin-bottom:4px;font-weight:500}
+.summary-item .sv{font-size:26px;font-weight:800;color:#1a237e;letter-spacing:-1px}
+.summary-item .sv.o{color:#f59e0b}.summary-item .sv.g{color:#10b981}.summary-item .sv.r{color:#ef4444}
+.summary-sep{width:2px;background:linear-gradient(180deg,transparent,#c0d4f0,transparent);flex-shrink:0}
+.summary-sub{font-size:10px;color:#bbb;margin-top:1px}
+
+/* 板块 */
+.section{background:#fff;border-radius:10px;margin-bottom:14px;box-shadow:0 1px 6px rgba(0,0,0,.04);overflow:hidden}
+.section-h{padding:14px 20px;background:#fafafa;border-bottom:1px solid #f0f0f0;display:flex;justify-content:space-between;align-items:center;cursor:pointer;user-select:none}
+.section-h h2{font-size:15px;color:#1a237e;margin:0}
+.section-h .tog{font-size:16px;color:#aaa;transition:.3s;min-width:20px;text-align:center}
+.section-h .tog.c{transform:rotate(-90deg)}
+.section-b{padding:16px 20px}
+.section-b.h{display:none}
+.subsec{margin-bottom:18px}
+.subsec:last-child{margin-bottom:0}
+.subsec-title{font-size:13px;font-weight:600;color:#555;margin-bottom:10px;padding-left:8px;border-left:3px solid #1a237e}
+
+/* 表格 */
+.tbl{width:100%;border-collapse:collapse;font-size:12px}
+.tbl th,.tbl td{border:1px solid #e8e8e8;padding:7px 5px;text-align:center}
+.tbl th:first-child,.tbl th[rowspan]{text-align:center}
+.tbl th{background:#e6f0ff;font-weight:600;color:#1a237e}
+.tbl .hdr{background:#e6f0ff;font-weight:600}
+.tbl .lb{text-align:center;font-weight:500;background:#fafafa}
+.tbl tr:hover td{background:#fafafa}
+.tbl .g{color:#10b981;font-weight:600}
+.tbl .r{color:#ef4444;font-weight:600}
+.tbl .o{color:#f59e0b;font-weight:600}
+/* 评估表 */
+.atbl{width:100%;border-collapse:collapse;font-size:12px}
+.atbl th,.atbl td{border:1px solid #e8e8e8;padding:8px 5px;text-align:center}
+.atbl th{background:#f5f7fa;font-weight:600;color:#555}
+.atbl .pass{background:#f6ffed;color:#10b981;font-weight:600}
+.atbl .fail{background:#fff1f0;color:#ef4444;font-weight:600}
+.atbl .dl{text-align:center;font-weight:600;color:#333}
+
+/* 图表 */
+.chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
+.chart-b{gap:12px}
+.chart-box{background:#fafafa;border-radius:8px;padding:10px;min-height:320px;width:100%}
+.chart-full{grid-column:1/-1}
+
+/* 分析 */
+.ana{padding:12px 16px;background:#fffbe6;border-left:4px solid #faad14;border-radius:4px;margin-top:12px;font-size:12px;color:#666;line-height:1.8;white-space:pre-wrap}
+
+/* 折叠成本表 */
+.cost-toggle{cursor:pointer;color:#1a237e;font-size:12px;padding:6px 0;display:inline-flex;align-items:center;gap:4px;user-select:none}
+.cost-toggle:hover{opacity:.8}
+.cost-section{margin-top:8px;display:none}
+
+/* 对比颜色 */
+.cup{color:#ef4444;font-weight:600}
+.cdn{color:#10b981;font-weight:600}
+
+/* Loading */
+.loading{text-align:center;padding:40px;color:#999}
+/* Lightbox */
+.lb-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.85);z-index:9999;justify-content:center;align-items:center}
+.lb-overlay.show{display:flex}
+.lb-overlay img{max-width:95vw;max-height:95vh;border-radius:8px;box-shadow:0 8px 40px rgba(0,0,0,.5);transition:transform .2s ease;cursor:grab;user-select:none;-webkit-user-drag:none}
+.lb-overlay img.grabbing{cursor:grabbing}
+.lb-close{position:fixed;top:20px;right:30px;color:#fff;font-size:36px;cursor:pointer;z-index:10000;opacity:.7;transition:.2s}
+.lb-close:hover{opacity:1}
+.lb-toolbar{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:10000;display:flex;gap:6px;align-items:center;background:rgba(0,0,0,.55);border-radius:20px;padding:6px 14px}
+.lb-toolbar button,.lb-toolbar span{background:none;border:none;color:#fff;font-size:15px;cursor:pointer;padding:4px 10px;border-radius:4px;transition:.2s;line-height:1}
+.lb-toolbar button:hover{background:rgba(255,255,255,.2)}
+.lb-toolbar span{font-size:12px;opacity:.8;min-width:36px;text-align:center}
+.org-preview{cursor:zoom-in;transition:opacity .2s;max-width:100%;border-radius:6px;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.org-preview:hover{opacity:.85}
+/* Tab */
+.tb{display:flex;gap:0;border-bottom:2px solid #e8e8e8;margin-bottom:14px}
+.tb span{padding:7px 18px;cursor:pointer;font-size:13px;color:#888;border-bottom:2px solid transparent;margin-bottom:-2px;transition:.2s}
+.tb span:hover{color:#1a237e}
+.tb span.on{color:#1a237e;border-bottom-color:#1a237e;font-weight:600}
+.tc{display:none}.tc.on{display:block}
+
+@media(max-width:900px){
+  .summary-item{min-width:100px;padding:10px 3px}.summary-item .sv{font-size:18px}.summary-item .sl{font-size:10px}
+  .chart-grid{grid-template-columns:1fr}
+  .header{padding:10px 12px}.header h1{font-size:15px}
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>PBU口岸事业部 - 组织能力月度看板</h1>
+    <div style="font-size:11px;color:rgba(255,255,255,.7);margin-top:2px">更新周期：月度 &nbsp;|&nbsp; 数据来源：PBU花名册 + 编制表</div>
+  </div>
+  <div class="month-selector">
+    <div class="month-nav"><button onclick="prevMonth()">◀</button></div>
+    <select id="ms" onchange="switchMonth(this.value)"><option>加载中...</option></select>
+    <div class="month-nav"><button onclick="nextMonth()">▶</button></div>
+  </div>
+</div>
+
+<div class="container" id="app"><div class="loading">加载数据中</div></div>
+
+<!-- Lightbox -->
+<div class="lb-overlay" id="lightbox" onclick="closePreview()">
+  <span class="lb-close">&times;</span>
+  <div style="display:flex;justify-content:center;align-items:center;width:100%;height:100%" onclick="event.stopPropagation()">
+    <img id="lightboxImg" src="" alt="预览">
+  </div>
+  <div class="lb-toolbar">
+    <button onclick="event.stopPropagation();zoomOut()" title="缩小">−</button>
+    <span id="zoomPct">100%</span>
+    <button onclick="event.stopPropagation();zoomIn()" title="放大">+</button>
+    <button onclick="event.stopPropagation();zoomReset()" title="还原">⟳</button>
+    <button onclick="event.stopPropagation();zoomFit()" title="适合窗口">⊡</button>
+  </div>
+</div>
+
+<script>
+let allData={}, months=[], currentMonth='';
+// === EMBEDDED DATA ===
+const EMBED_MONTHS = ["2026-05"];
+const EMBED_DATA = {"2026-05": {"month": "2026-05", "assessment": {"组织能力": {"PBU": "不达标", "丹麦区": "不达标", "比利时区": "达标", "西班牙区": "达标", "澳洲区": "达标", "日本区": "达标", "北美区": "不达标", "四海捷运项目部": "达标", "经营管理部": "达标", "销售客服部": "达标", "交付运营部": "不达标", "PBU技术部": "达标", "欧洲一区": "不达标", "欧洲二区": "达标", "欧洲三区": "达标", "英国区": "不达标", "荷兰区": "不达标", "法国区": "达标", "意大利区": "达标", "匈牙利区": "达标"}, "组织架构": {"PBU": "不达标", "丹麦区": "达标", "比利时区": "达标", "西班牙区": "达标", "澳洲区": "达标", "日本区": "达标", "北美区": "不达标", "四海捷运项目部": "达标", "经营管理部": "达标", "销售客服部": "达标", "交付运营部": "达标", "PBU技术部": "达标", "欧洲一区": "达标", "欧洲二区": "达标", "欧洲三区": "达标", "英国区": "达标", "荷兰区": "达标", "法国区": "达标", "意大利区": "达标", "匈牙利区": "达标"}, "人才密度": {"PBU": "不达标", "丹麦区": "不达标", "比利时区": "达标", "西班牙区": "达标", "澳洲区": "达标", "日本区": "达标", "北美区": "达标", "四海捷运项目部": "达标", "经营管理部": "达标", "销售客服部": "达标", "交付运营部": "不达标", "PBU技术部": "达标", "欧洲一区": "不达标", "欧洲二区": "达标", "欧洲三区": "达标", "英国区": "不达标", "荷兰区": "不达标", "法国区": "达标", "意大利区": "达标", "匈牙利区": "达标"}, "文化氛围": {"PBU": "不达标", "丹麦区": "达标", "比利时区": "达标", "西班牙区": "达标", "澳洲区": "达标", "日本区": "达标", "北美区": "达标", "四海捷运项目部": "达标", "经营管理部": "达标", "销售客服部": "达标", "交付运营部": "达标", "PBU技术部": "达标", "欧洲一区": "达标", "欧洲二区": "达标", "欧洲三区": "达标", "英国区": "达标", "荷兰区": "达标", "法国区": "达标", "意大利区": "达标", "匈牙利区": "达标"}}, "assessment_analysis": "PBU组织能力总览：\n1.组织结构：PBU不达标，北美区不达标（待业务确定后）\n2.人才密度：\n3.文化氛围：", "summary": {"编制总数": 381, "在职总数": 313, "空编数": 68, "满编率": 0.8215, "核心人员胜任率": 0.8462, "优秀人才保留率": 0.9859, "关键岗位_编制总数": 58, "关键岗位_在职人数": 52, "关键岗位_空编数": 6, "关键岗位_满编率": 0.8966}, "org_chart": "5月组织架构调整内容：", "establishment": {"level2_headers": {"C": "欧洲一区", "F": "欧洲二区", "H": "欧洲三区", "K": "澳洲区", "L": "日本区", "M": "北美区", "N": "四海捷运项目部", "O": "经营管理部", "P": "销售客服部", "Q": "交付运营部", "R": "PBU技术部"}, "level3_headers": {"C": "丹麦区", "D": "英国区", "E": "荷兰区", "F": "比利时区", "G": "法国区", "H": "西班牙区", "I": "意大利区", "J": "匈牙利区", "K": "澳洲区", "L": "日本区", "M": "北美区", "N": "四海捷运项目部", "O": "经营管理部", "P": "销售客服部", "Q": "交付运营部", "R": "PBU技术部"}, "data": [{"label": "编制数", "type": "", "C": 15.0, "D": 52.0, "E": 23.0, "F": 16.0, "G": 84.0, "H": 10.0, "I": 23.0, "J": 8.0, "K": 7.0, "L": 6.0, "M": 20.0, "N": 40.0, "O": 6.0, "P": 11.0, "Q": 15.0, "R": 45.0}, {"label": "销售费用", "type": "", "C": 0.0, "D": 2.0, "E": 0.0, "F": 0.0, "G": 8.0, "H": 0.0, "I": 0.0, "J": 0.0, "K": 0.0, "L": 0.0, "M": 1.0, "N": 2.0, "O": 0.0, "P": 11.0, "Q": 0.0, "R": 0.0}, {"label": "提货成本", "type": "", "C": 0.0, "D": 3.0, "E": 0.0, "F": 0.0, "G": 11.0, "H": 0.0, "I": 4.0, "J": 0.0, "K": 0.0, "L": 0.0, "M": 4.0, "N": 0.0, "O": 0.0, "P": 0.0, "Q": 0.0, "R": 0.0}, {"label": "清关成本", "type": "", "C": 3.0, "D": 7.0, "E": 5.0, "F": 3.0, "G": 4.0, "H": 4.0, "I": 5.0, "J": 3.0, "K": 3.0, "L": 3.0, "M": 2.0, "N": 16.0, "O": 0.0, "P": 0.0, "Q": 0.0, "R": 0.0}, {"label": "库操成本", "type": "", "C": 4.0, "D": 17.0, "E": 5.0, "F": 3.0, "G": 33.0, "H": 3.0, "I": 2.0, "J": 2.0, "K": 2.0, "L": 1.0, "M": 4.0, "N": 2.0, "O": 0.0, "P": 0.0, "Q": 0.0, "R": 0.0}, {"label": "管理费用", "type": "", "C": 4.0, "D": 9.0, "E": 5.0, "F": 10.0, "G": 20.0, "H": 2.0, "I": 12.0, "J": 3.0, "K": 2.0, "L": 2.0, "M": 4.0, "N": 20.0, "O": 6.0, "P": 0.0, "Q": 15.0, "R": 45.0}, {"label": "调度成本", "type": "", "C": 3.0, "D": 6.0, "E": 8.0, "F": 0.0, "G": 4.0, "H": 1.0, "I": 0.0, "J": 0.0, "K": 0.0, "L": 0.0, "M": 5.0, "N": 0.0, "O": 0.0, "P": 0.0, "Q": 0.0, "R": 0.0}, {"label": "地勤业务成本", "type": "", "C": 1.0, "D": 8.0, "E": 0.0, "F": 0.0, "G": 4.0, "H": 0.0, "I": 0.0, "J": 0.0, "K": 0.0, "L": 0.0, "M": 0.0, "N": 0.0, "O": 0.0, "P": 0.0, "Q": 0.0, "R": 0.0}]}, "actual_headcount": {"level2_headers": {"C": "欧洲一区", "F": "欧洲二区", "H": "欧洲三区", "K": "澳洲区", "L": "日本区", "M": "北美区", "N": "四海捷运项目部", "O": "经营管理部", "P": "销售客服部", "Q": "交付运营部", "R": "PBU技术部"}, "level3_headers": {"C": "丹麦区", "D": "英国区", "E": "荷兰区", "F": "比利时区", "G": "法国区", "H": "西班牙区", "I": "意大利区", "J": "匈牙利区", "K": "澳洲区", "L": "日本区", "M": "北美区", "N": "四海捷运项目部", "O": "经营管理部", "P": "销售客服部", "Q": "交付运营部", "R": "PBU技术部"}, "data": [{"label": "在职人数", "type": "", "C": 9.0, "D": 35.0, "E": 19.0, "F": 13.0, "G": 70.0, "H": 10.0, "I": 17.0, "J": 7.0, "K": 4.0, "L": 6.0, "M": 15.0, "N": 36.0, "O": 6.0, "P": 9.0, "Q": 14.0, "R": 43.0}, {"label": "销售费用", "type": "", "C": 0.0, "D": 1.0, "E": 0.0, "F": 0.0, "G": 3.0, "H": 0.0, "I": 0.0, "J": 0.0, "K": 0.0, "L": 0.0, "M": 1.0, "N": 2.0, "O": 0.0, "P": 9.0, "Q": 0.0, "R": 0.0}, {"label": "提货成本", "type": "", "C": 0.0, "D": 0.0, "E": 0.0, "F": 0.0, "G": 11.0, "H": 0.0, "I": 2.0, "J": 0.0, "K": 0.0, "L": 0.0, "M": 4.0, "N": 0.0, "O": 0.0, "P": 0.0, "Q": 0.0, "R": 0.0}, {"label": "清关成本", "type": "", "C": 2.0, "D": 6.0, "E": 4.0, "F": 3.0, "G": 4.0, "H": 4.0, "I": 3.0, "J": 2.0, "K": 2.0, "L": 3.0, "M": 1.0, "N": 12.0, "O": 0.0, "P": 0.0, "Q": 0.0, "R": 0.0}, {"label": "库操成本", "type": "", "C": 3.0, "D": 11.0, "E": 4.0, "F": 1.0, "G": 28.0, "H": 3.0, "I": 2.0, "J": 2.0, "K": 1.0, "L": 1.0, "M": 2.0, "N": 2.0, "O": 0.0, "P": 0.0, "Q": 0.0, "R": 0.0}, {"label": "管理费用", "type": "", "C": 3.0, "D": 7.0, "E": 5.0, "F": 9.0, "G": 20.0, "H": 2.0, "I": 10.0, "J": 3.0, "K": 1.0, "L": 2.0, "M": 3.0, "N": 20.0, "O": 6.0, "P": 0.0, "Q": 14.0, "R": 43.0}, {"label": "调度成本", "type": "", "C": 1.0, "D": 6.0, "E": 6.0, "F": 0.0, "G": 2.0, "H": 1.0, "I": 0.0, "J": 0.0, "K": 0.0, "L": 0.0, "M": 4.0, "N": 0.0, "O": 0.0, "P": 0.0, "Q": 0.0, "R": 0.0}, {"label": "地勤业务成本", "type": "", "C": 0.0, "D": 4.0, "E": 0.0, "F": 0.0, "G": 2.0, "H": 0.0, "I": 0.0, "J": 0.0, "K": 0.0, "L": 0.0, "M": 0.0, "N": 0.0, "O": 0.0, "P": 0.0, "Q": 0.0, "R": 0.0}]}, "fill_rate": {"level2_headers": {"C": "欧洲一区", "F": "欧洲二区", "H": "欧洲三区", "K": "澳洲区", "L": "日本区", "M": "北美区", "N": "四海捷运项目部", "O": "经营管理部", "P": "销售客服部", "Q": "交付运营部", "R": "PBU技术部"}, "level3_headers": {"C": "丹麦区", "D": "英国区", "E": "荷兰区", "F": "比利时区", "G": "法国区", "H": "西班牙区", "I": "意大利区", "J": "匈牙利区", "K": "澳洲区", "L": "日本区", "M": "北美区", "N": "四海捷运项目部", "O": "经营管理部", "P": "销售客服部", "Q": "交付运营部", "R": "PBU技术部"}, "data": [{"label": "部门编制数", "C": 15.0, "D": 52.0, "E": 23.0, "F": 16.0, "G": 84.0, "H": 10.0, "I": 23.0, "J": 8.0, "K": 7.0, "L": 6.0, "M": 20.0, "N": 40.0, "O": 6.0, "P": 11.0, "Q": 15.0, "R": 45.0}, {"label": "部门在职数", "C": 9.0, "D": 35.0, "E": 19.0, "F": 13.0, "G": 70.0, "H": 10.0, "I": 17.0, "J": 7.0, "K": 4.0, "L": 6.0, "M": 15.0, "N": 36.0, "O": 6.0, "P": 9.0, "Q": 14.0, "R": 43.0}, {"label": "部门满编率", "C": 0.6, "D": 0.673076923076923, "E": 0.826086956521739, "F": 0.8125, "G": 0.833333333333333, "H": 1.0, "I": 0.739130434782609, "J": 0.875, "K": 0.571428571428571, "L": 1.0, "M": 0.75, "N": 0.9, "O": 1.0, "P": 0.818181818181818, "Q": 0.933333333333333, "R": 0.955555555555556}], "cost_detail": [{"label": "销售费用", "D": 0.5, "G": 0.375, "M": 1.0, "N": 1.0, "P": 0.818181818181818}, {"label": "提货成本", "G": 1.0, "I": 0.5, "M": 1.0}, {"label": "清关成本", "C": 0.666666666666667, "D": 0.857142857142857, "E": 0.8, "F": 1.0, "G": 1.0, "H": 1.0, "I": 0.6, "J": 0.666666666666667, "K": 0.666666666666667, "L": 1.0, "M": 0.5, "N": 0.75}, {"label": "库操成本", "C": 0.75, "D": 0.647058823529412, "E": 0.8, "F": 0.333333333333333, "G": 0.848484848484849, "H": 1.0, "I": 1.0, "J": 1.0, "K": 0.5, "L": 1.0, "M": 0.5, "N": 1.0}, {"label": "管理费用", "C": 0.75, "D": 0.777777777777778, "E": 1.0, "F": 0.9, "G": 1.0, "H": 1.0, "I": 0.833333333333333, "J": 1.0, "K": 0.5, "L": 1.0, "M": 0.75, "N": 1.0, "O": 1.0, "Q": 0.933333333333333, "R": 0.955555555555556}, {"label": "调度成本", "C": 0.333333333333333, "D": 1.0, "E": 0.75, "G": 0.5, "H": 1.0, "M": 0.8}, {"label": "地勤业务成本", "D": 0.5, "G": 0.5}], "analysis": "数据分析：\n1.欧洲一区5月空编总数为27，主要为英国EMA仓留的编制；丹麦区有3个非关键岗已超出预计到岗时间，请BP评估其影响并重新更新预计到岗时间；\n2.欧洲三区的部门满编率虽然较低，但空缺的岗位都不是关键岗且尚未超出预计到岗时间，暂不需要特别关注\n3.澳洲区4月空编总数为3，其中有1个非关键岗位已超出预计到岗时间时间，请BP评估其影响并重新更新预计到岗时间；\n分析维度：1.大部分空编计划下半年到岗；2.在正常招聘流程中"}, "key_position": {"level2_headers": {"C": "欧洲一区", "F": "欧洲二区", "H": "欧洲三区", "K": "澳洲区", "L": "日本区", "M": "北美区", "N": "四海捷运项目部", "O": "经营管理部", "P": "销售客服部", "Q": "交付运营部", "R": "PBU技术部"}, "level3_headers": {"C": "丹麦区", "D": "英国区", "E": "荷兰区", "F": "比利时区", "G": "法国区", "H": "西班牙区", "I": "意大利区", "J": "匈牙利区", "K": "澳洲区", "L": "日本区", "M": "北美区", "N": "四海捷运项目部", "O": "经营管理部", "P": "销售客服部", "Q": "交付运营部", "R": "PBU技术部"}, "data": [{"label": "关键岗位编制数", "C": 2.0, "D": 5.0, "E": 4.0, "F": 3.0, "G": 6.0, "H": 3.0, "I": 2.0, "J": 1.0, "K": 2.0, "L": 3.0, "M": 2.0, "N": 5.0, "O": 5.0, "P": 4.0, "Q": 6.0, "R": 5.0}, {"label": "关键岗位在岗人数", "C": 2.0, "D": 2.0, "E": 3.0, "F": 3.0, "G": 6.0, "H": 3.0, "I": 2.0, "J": 1.0, "K": 2.0, "L": 3.0, "M": 2.0, "N": 5.0, "O": 5.0, "P": 3.0, "Q": 5.0, "R": 5.0}, {"label": "核心人员胜任人数", "C": 2.0, "D": 1.0, "E": 2.0, "F": 3.0, "G": 5.0, "H": 2.0, "I": 2.0, "J": 1.0, "K": 2.0, "L": 2.0, "M": 2.0, "N": 4.0, "O": 5.0, "P": 2.0, "Q": 4.0, "R": 5.0}, {"label": "关键岗位满编率", "sub_label": "小计", "C": 1.0, "D": 0.6, "E": 0.75, "F": 1.0, "G": 1.0, "H": 1.0, "I": 1.0, "J": 1.0, "K": 1.0, "L": 1.0, "M": 1.0, "N": 1.0, "O": 1.0, "P": 0.75, "Q": 0.833333333333333, "R": 1.0}, {"label": "", "sub_label": "合计", "C": 0.636363636363636, "F": 1.0, "H": 1.0, "K": 1.0, "L": 1.0, "M": 1.0, "N": 1.0, "O": 1.0, "P": 0.75, "Q": 0.833333333333333, "R": 1.0}, {"label": "核心人员胜任率", "sub_label": "小计", "C": 1.0, "D": 0.5, "E": 0.666666666666667, "F": 1.0, "G": 0.833333333333333, "H": 0.666666666666667, "I": 1.0, "J": 1.0, "K": 1.0, "L": 0.666666666666667, "M": 1.0, "N": 0.8, "O": 1.0, "P": 0.666666666666667, "Q": 0.8, "R": 1.0}, {"label": "", "sub_label": "合计", "C": 0.714285714285714, "F": 0.888888888888889, "H": 0.833333333333333, "K": 1.0, "L": 0.666666666666667, "M": 1.0, "N": 0.8, "O": 1.0, "P": 0.666666666666667, "Q": 0.8, "R": 1.0}], "analysis": "数据分析：\n关键岗位满编率：①欧洲一区空缺的关键岗位共有4个，其中英国区空缺的关键岗位有2个（不包含Orson兼岗的岗位），预计到岗时间为五月和六月，BP需关注招聘进度；②荷兰区一个空缺的关键岗位五月入职；BP需关注一个核心人员的胜任情况；③西班牙区和日本区需分别关注一个核心人员的胜任情况\n核心人员胜任率：4月指标中欧洲一区共有2个核心人员不胜任，欧洲三区有1个核心人员不胜任，BP及区长需持续关注该核心人员后续的工作情况；"}, "personnel_changes": {"入职": {"C": 0, "D": 5, "E": 3, "F": 5, "G": 0, "H": 1, "I": 3, "J": 2, "K": 0, "L": 0, "M": 1, "N": 4, "O": 0, "P": 0, "Q": 1, "R": 1}, "离职": {"C": 0, "D": 2, "E": 3, "F": 4, "G": 7, "H": 0, "I": 0, "J": 0, "K": 0, "L": 0, "M": 0, "N": 1, "O": 0, "P": 0, "Q": 1, "R": 0}, "调动": {"C": 0, "D": 0, "E": 0, "F": 0, "G": 0, "H": 1, "I": 0, "J": 0, "K": 0, "L": 0, "M": 0, "N": 0, "O": 0, "P": 0, "Q": 0, "R": 0}}, "changes_analysis": "数据分析：入职：关键岗位入职明细情况；离职：串联离职率分析看板；调动：核心人员调动情况", "retention": {"data": [{"label": "目标留任人才数量", "C": 9.0, "F": 20.0, "H": 4.0, "K": 1.0, "L": 1.0, "M": 1.0, "N": 5.0, "O": 2.0, "P": 2.0, "Q": 2.0, "R": 11.0}, {"label": "在职", "C": 3.0, "D": 4.0, "E": 4.0, "F": 3.0, "G": 20.0, "H": 0.0, "I": 4.0, "J": 2.0, "K": 1.0, "L": 1.0, "M": 2.0, "N": 6.0, "O": 2.0, "P": 2.0, "Q": 2.0, "R": 14.0}, {"label": "离职", "C": 0.0, "D": 0.0, "E": 1.0, "F": 0.0, "G": 0.0, "H": 0.0, "I": 0.0, "J": 0.0, "K": 0.0, "L": 0.0, "M": 0.0, "N": 0.0, "O": 0.0, "P": 0.0, "Q": 0.0, "R": 0.0}, {"label": "保留率", "sub_label": "小计", "C": 1.0, "D": 1.0, "E": 0.8, "F": 1.0, "G": 1.0, "H": 0.0, "I": 1.0, "J": 1.0, "K": 1.0, "L": 1.0, "M": 1.0, "N": 1.0, "O": 1.0, "P": 1.0, "Q": 1.0, "R": 1.0}, {"label": "保留率", "sub_label": "合计", "C": 0.916666666666667, "F": 1.0, "H": 1.0, "K": 1.0, "L": 1.0, "M": 1.0, "N": 1.0, "O": 1.0, "P": 1.0, "Q": 1.0, "R": 1.0}], "analysis": "数据分析：截止4月底，只有荷兰出现1位优秀人才离职，BP需分析离职原因并总结经验。"}, "improvements": {"四月": {}}}};
+
+async function init(){
+  try{months=EMBED_MONTHS;allData=EMBED_DATA}catch(e){months=['2026-05']}
+  if(!months.length){document.getElementById('app').innerHTML='<div class="loading">暂无数据</div>';return}
+  for(const m of months){
+    if(!allData[m])allData[m]=null;
+  }
+  currentMonth=months[months.length-1];
+  document.getElementById('ms').innerHTML=months.map(m=>{const[y,mo]=m.split('-');return `<option value="${m}" ${m===currentMonth?'selected':''}>${y}年${parseInt(mo)}月</option>`}).join('');
+  render(currentMonth);
+}
+
+function switchMonth(m){currentMonth=m;document.getElementById('ms').value=m;render(m);scrollTo(0,0)}
+function prevMonth(){const i=months.indexOf(currentMonth);if(i>0)switchMonth(months[i-1])}
+function nextMonth(){const i=months.indexOf(currentMonth);if(i<months.length-1)switchMonth(months[i+1])}
+
+function fpct(v){return v==null?'-':(v*100).toFixed(1)+'%'}
+function fnum(v){return v==null?'-':typeof v==='number'?Math.round(v).toLocaleString():v}
+function pc(v){if(v==null)return'';if(v>=.9)return'g';if(v>=.8)return'';if(v>=.6)return'o';return'r'}
+
+function toggleSec(id){document.getElementById(id+'_b').classList.toggle('h');document.getElementById(id+'_t').classList.toggle('c');
+  setTimeout(()=>{const el=document.getElementById(id+'_b');if(!el.classList.contains('h')){el.querySelectorAll('.chart-box').forEach(b=>{const i=echarts.getInstanceByDom(b);if(i)i.resize()})}},300)}
+
+const so=['C','F','H','K','L','M','N','O','P','Q','R'];
+const dn={C:'欧洲一区',F:'欧洲二区',H:'欧洲三区',K:'澳洲区',L:'日本区',M:'北美区',N:'四海捷运项目部',O:'经营管理部',P:'销售客服部',Q:'交付运营部',R:'PBU技术部'};
+const dl={C:'丹麦区',D:'英国区',E:'荷兰区',F:'比利时区',G:'法国区',H:'西班牙区',I:'意大利区',J:'匈牙利区',K:'澳洲区',L:'日本区',M:'北美区',N:'四海捷运项目部',O:'经营管理部',P:'销售客服部',Q:'交付运营部',R:'PBU技术部'};
+const ac=['C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R'];
+
+function subCols(c){return c==='C'?['C','D','E']:c==='F'?['F','G']:c==='H'?['H','I','J']:[c]}
+
+function prevEstabl(){const i=months.indexOf(currentMonth);if(i<=0)return null;const p=allData[months[i-1]];return p&&p.establishment?p.establishment.data:null}
+function prevActual(){const i=months.indexOf(currentMonth);if(i<=0)return null;const p=allData[months[i-1]];return p&&p.actual_headcount?p.actual_headcount.data:null}
+
+function render(m){
+  const d=allData[m];if(!d){document.getElementById('app').innerHTML='<div class="loading">未找到'+m+'数据</div>';return}
+  let h='';
+  h+=sec('一、组织能力评估结果','s1',renderAssess(d),1);
+  h+=sec('二、PBU组织架构图','s2',renderOrg(d),1);
+  h+=sec('三、PBU人才密度总览（不含蓝领）','s3',renderSummary(d)+renderDensity(d),1);
+  h+=sec('四、各部门月度人员变动展示','s4',renderChanges(d));
+  h+=sec('五、各部门优秀人才保留数量','s5',renderRetention(d),1);
+  h+=sec('六、改善建议与措施','s6',renderImprove(d));
+  document.getElementById('app').innerHTML=h;
+  setTimeout(()=>{initCharts(d)},300);
+}
+
+function sec(title,id,body,open){
+  return `<div class="section">
+    <div class="section-h" onclick="toggleSec('${id}')"><h2>${title}</h2><span class="tog${open?'':' c'}" id="${id}_t">▼</span></div>
+    <div class="section-b${open?'':' h'}" id="${id}_b">${body}</div>
+  </div>`;
+}
+
+// ── 摘要 ──
+function renderSummary(d){
+  const s=d.summary;const rc=v=>v>=.85?'g':v>=.7?'o':'r';
+  function it(l,v,c,sub){return `<div class="summary-item"><div class="sl">${l}</div><div class="sv ${c||''}">${v}</div>${sub?`<div class="summary-sub">${sub}</div>`:''}</div>`}
+  function sp(){return '<div class="summary-sep"></div>'}
+  return `<div class="summary-cards">
+    <div class="summary-row">${it('PBU 编制总数',fnum(s.编制总数),'','不含蓝领/实习生/外包')}${sp()}${it('PBU 在职总数',fnum(s.在职总数),'','不含蓝领')}${sp()}${it('PBU 空编数',fnum(s.空编数),'o','空缺岗位')}${sp()}${it('PBU 满编率',fpct(s.满编率),rc(s.满编率),'在职/编制')}${sp()}${it('核心人员胜任率',fpct(s.核心人员胜任率),rc(s.核心人员胜任率),'盘点12345格子')}${sp()}${it('优秀人才保留率',fpct(s.优秀人才保留率),'g','123+评优+破格晋升')}</div>
+    <div class="summary-row">${it('关键岗位 编制总数',fnum(s.关键岗位_编制总数),'','所有AB类')}${sp()}${it('关键岗位 在职人数',fnum(s.关键岗位_在职人数))}${sp()}${it('关键岗位 空编数',fnum(s.关键岗位_空编数),'o')}${sp()}${it('关键岗位 满编率',fpct(s.关键岗位_满编率),rc(s.关键岗位_满编率),'在岗/编制')}</div>
+  </div>`;
+}
+
+// ── 评估 ──
+function renderAssess(d){
+  const dims=['组织能力','组织架构','人才密度','文化氛围'];
+  const cols=[{l:'PBU',k:'PBU'},{l:'欧洲一区',k:'欧洲一区',n:3,s:[{l:'丹麦',k:'丹麦区'},{l:'英国',k:'英国区'},{l:'荷兰',k:'荷兰区'}]},{l:'欧洲二区',k:'欧洲二区',n:2,s:[{l:'比利时',k:'比利时区'},{l:'法国',k:'法国区'}]},{l:'欧洲三区',k:'欧洲三区',n:3,s:[{l:'西班牙',k:'西班牙区'},{l:'意大利',k:'意大利区'},{l:'匈牙利',k:'匈牙利区'}]},{l:'澳洲区',k:'澳洲区'},{l:'日本区',k:'日本区'},{l:'北美区',k:'北美区'},{l:'四海捷运项目部',k:'四海捷运项目部'},{l:'经营管理部',k:'经营管理部'},{l:'销售客服部',k:'销售客服部'},{l:'交付运营部',k:'交付运营部'},{l:'PBU技术部',k:'PBU技术部'}];
+  let h='<table class="atbl"><thead><tr><th rowspan="2">评估维度</th>';
+  for(const c of cols){if(c.s){h+=`<th colspan="${c.n}">${c.l}</th>`}else h+=`<th rowspan="2">${c.l}</th>`}
+  h+='</tr><tr>';
+  for(const c of cols){if(c.s){for(const s of c.s)h+=`<th style="font-weight:400;font-size:10px">${s.l}</th>`}}
+  h+='</tr></thead><tbody>';
+  for(const dim of dims){
+    h+='<tr><td class="dl">'+dim+'</td>';
+    for(const c of cols){
+      if(c.s){for(const s of c.s){const v=(d.assessment[dim]||{})[s.k]||'-';h+=`<td class="${v==='达标'?'pass':v==='不达标'?'fail':''}">${v}</td>`}}
+      else{const v=(d.assessment[dim]||{})[c.k]||'-';h+=`<td class="${v==='达标'?'pass':v==='不达标'?'fail':''}">${v}</td>`}
+    }
+    h+='</tr>';
+  }
+  h+='</tbody></table>';
+  if(d.assessment_analysis)h+=`<div class="ana">${d.assessment_analysis}</div>`;
+  return h;
+}
+
+// ── 架构图 ──
+function renderOrg(d){
+  return `<div style="text-align:center;padding:12px;background:#fafafa;border-radius:8px">
+    <img src="org_chart.png" class="org-preview" onclick="previewImage(this)" alt="PBU组织架构图" title="点击预览大图">
+    <p style="margin-top:8px;font-size:12px;color:#888">点击图片查看大图</p>
+  </div>`;
+}
+
+// ── 人才密度（3.1/3.2/3.3/3.4  Tab切换） ──
+function renderDensity(d){
+  let h='';
+  // 取数口径
+  h+=`<div class="subsec"><div class="subsec-title">取数口径</div>
+    <p style="font-size:12px;color:#888;line-height:1.8">编制及在岗人数均不含实习生、外包、蓝领；<br>
+    ①"关键岗位"指承载关键组织职责和目标的岗位(所有AB类)；②"核心人员"指关键岗位在岗人员；③"核心人员胜任"指关键岗位在岗人员年度人才盘点在12345格子；④"优秀人才"指人才盘点123+集团及BU评优+破格晋升</p></div>`;
+
+  // Tab bar
+  h+='<div class="tb"><span class="on" onclick="switchTab(event,\'t31\')">3.1 编制数</span><span onclick="switchTab(event,\'t32\')">3.2 在职人数</span><span onclick="switchTab(event,\'t33\')">3.3 满编率</span><span onclick="switchTab(event,\'t34\')">3.4 关键岗位</span></div>';
+
+  // Tab 3.1
+  h+='<div class="tc on" id="t31">';
+  h+='<div class="subsec-title" style="margin-bottom:8px">3.1 各部门编制数展示（不含蓝领）</div>';
+  h+=renderEstabTable(d);
+  h+='<div class="ana">📌 分析方向：分析各国编制变动情况，如增编、缩编，通过上月明细数据对比，标色找BP确认编制变动原因</div>';
+  h+='</div>';
+
+  // Tab 3.2
+  h+='<div class="tc" id="t32">';
+  h+='<div class="subsec-title" style="margin-bottom:8px">3.2 各部门在职人数展示（不含蓝领）</div>';
+  h+=renderActualTable(d);
+  h+='</div>';
+
+  // Tab 3.3
+  h+='<div class="tc" id="t33">';
+  h+='<div class="subsec-title" style="margin-bottom:8px">3.3 各部门满编率展示</div>';
+  h+=renderFillTable(d);
+  h+='<div class="chart-box chart-full" id="chart_fillrate" style="height:400px;margin-top:12px"></div>';
+  h+=renderCostDetail(d);
+  if(d.fill_rate.analysis)h+=`<div class="ana">${d.fill_rate.analysis}</div>`;
+  h+='</div>';
+
+  // Tab 3.4
+  h+='<div class="tc" id="t34">';
+  h+='<div class="subsec-title" style="margin-bottom:8px">3.4 关键岗位满编率 & 核心人员胜任率</div>';
+  h+=renderKeyPosTable(d);
+  h+='<div class="chart-grid"><div class="chart-box" id="chart_key_fill" style="height:350px"></div><div class="chart-box" id="chart_key_comp" style="height:350px"></div></div>';
+  if(d.key_position.analysis)h+=`<div class="ana">${d.key_position.analysis}</div>`;
+  h+='</div>';
+
+  return h;
+}
+
+function switchTab(evt,id){
+  const t=evt.target,p=t.parentElement;
+  p.querySelectorAll('span').forEach(s=>s.classList.remove('on'));
+  t.classList.add('on');
+  const container=p.parentElement;
+  container.querySelectorAll('.tc').forEach(c=>c.classList.remove('on'));
+  const target=document.getElementById(id);
+  if(target){
+    target.classList.add('on');
+    setTimeout(()=>{
+      target.querySelectorAll('.chart-box').forEach(el=>{
+        const i=echarts.getInstanceByDom(el);
+        if(i)i.resize();
+        else{
+          const did=el.id;
+          if(did==='chart_fillrate')initFillRateChart(allData[currentMonth]);
+          else if(did==='chart_key_fill')initKeyFillChart(allData[currentMonth]);
+          else if(did==='chart_key_comp')initKeyCompChart(allData[currentMonth]);
+        }
+      });
+    },200);
+  }
+}
+
+function tblHeaders(l3,secOnly){
+  let h1='<tr><th rowspan="2" style="width:80px">分类</th><th rowspan="2" style="width:40px">类型</th>';
+  let h2='<tr>';
+  for(const c of so){
+    const sc=subCols(c);
+    h1+=`<th colspan="${sc.length}" class="hdr">${dn[c]}</th>`;
+    for(const s of sc)h2+=`<th style="font-size:10px">${l3[s]||dl[s]}</th>`;
+  }
+  return {h1:h1+'</tr>',h2:h2+'</tr>'};
+}
+
+function addCmpRow(data,prevFn){
+  const pd=prevFn();if(!pd)return'';
+  let r='<tr style="font-size:11px;background:#fffbe6"><td class="lb">📊 环比变化</td>';
+  for(const c of so){
+    const sc=subCols(c);
+    for(const s of sc){
+      let ct=0,pt=0;
+      for(const row of data){if(row.label&&row[s]!=null)ct+=Number(row[s])}
+      for(const row of pd){if(row.label&&row[s]!=null)pt+=Number(row[s])}
+      if(!pt){r+='<td>-</td>';continue}
+      const diff=ct-pt;const sign=diff>0?'+':'';
+      r+=`<td class="${diff>0?'cup':diff<0?'cdn':''}">${sign}${diff}</td>`;
+    }
+  }
+  return r+'</tr>';
+}
+
+function renderEstabTable(d){
+  const data=d.establishment;const l3=data.level3_headers;
+  // 自定义表头（不含"类型"列）
+  let h1='<tr><th rowspan="2" style="width:80px">分类</th>';
+  let h2='<tr>';
+  for(const c of so){const sc=subCols(c);h1+=`<th colspan="${sc.length}" class="hdr">${dn[c]}</th>`;for(const s of sc)h2+=`<th style="font-size:10px">${l3[s]||dl[s]}</th>`}
+  h1+='</tr>';h2+='</tr>';
+  let r='';
+  for(const row of data.data){
+    if(!row.label)continue;
+    r+='<tr><td class="lb">'+row.label+'</td>';
+    for(const c of so){const sc=subCols(c);for(const s of sc)r+='<td>'+(row[s]!=null?fnum(row[s]):'-')+'</td>'}
+    r+='</tr>';
+  }
+  // 合计
+  r+='<tr style="font-weight:700;background:#f5f7fa"><td class="lb">合计</td>';
+  for(const c of so){const sc=subCols(c);for(const s of sc){
+    let t=0;for(const row of data.data){if(row.label&&row[s]!=null)t+=Number(row[s])}
+    r+=`<td>${t||'-'}</td>`;
+  }}
+  r+='</tr>';
+  r+=addCmpRow(data.data,prevEstabl);
+  return `<table class="tbl"><thead>${h1}${h2}</thead><tbody>${r}</tbody></table>`;
+}
+
+function renderActualTable(d){
+  const data=d.actual_headcount;const l3=data.level3_headers;
+  let h1='<tr><th rowspan="2" style="width:80px">分类</th>';
+  let h2='<tr>';
+  for(const c of so){const sc=subCols(c);h1+=`<th colspan="${sc.length}" class="hdr">${dn[c]}</th>`;for(const s of sc)h2+=`<th style="font-size:10px">${l3[s]||dl[s]}</th>`}
+  h1+='</tr>';h2+='</tr>';
+  let r='';
+  for(const row of data.data){
+    if(!row.label)continue;
+    r+='<tr><td class="lb">'+row.label+'</td>';
+    for(const c of so){const sc=subCols(c);for(const s of sc)r+='<td>'+(row[s]!=null?fnum(row[s]):'-')+'</td>'}
+    r+='</tr>';
+  }
+  r+='<tr style="font-weight:700;background:#f5f7fa"><td class="lb">合计</td>';
+  for(const c of so){const sc=subCols(c);for(const s of sc){
+    let t=0;for(const row of data.data){if(row.label&&row[s]!=null)t+=Number(row[s])}
+    r+=`<td>${t||'-'}</td>`;
+  }}
+  r+='</tr>';
+  r+=addCmpRow(data.data,prevActual);
+  return `<table class="tbl"><thead>${h1}${h2}</thead><tbody>${r}</tbody></table>`;
+}
+
+function renderFillTable(d){
+  const data=d.fill_rate;const l3=data.level3_headers;
+  let h1='<tr><th rowspan="2" style="width:80px">指标</th>';
+  let h2='<tr>';
+  for(const c of so){const sc=subCols(c);h1+=`<th colspan="${sc.length}" class="hdr">${dn[c]}</th>`;for(const s of sc)h2+=`<th style="font-size:10px">${l3[s]||dl[s]}</th>`}
+  h1+='</tr>';h2+='</tr>';
+  let r='';
+  for(const row of data.data){
+    r+='<tr><td class="lb">'+row.label+'</td>';
+    for(const c of so){const sc=subCols(c);for(const s of sc){
+      const v=row[s];
+      if(v==null){r+='<td>-</td>';continue}
+      r+=row.label.includes('率')?`<td class="${pc(v)}">${fpct(v)}</td>`:`<td>${fnum(v)}</td>`;
+    }}
+    r+='</tr>';
+  }
+  return `<table class="tbl"><thead>${h1}${h2}</thead><tbody>${r}</tbody></table>`;
+}
+
+function renderCostDetail(d){
+  const cd=d.fill_rate.cost_detail;
+  if(!cd||!cd.length)return'';
+  // 过滤掉全空的行
+  const valid=cd.filter(row=>{for(const c of ac)if(row[c]!=null)return true;return false});
+  if(!valid.length)return'';
+  const l3=d.fill_rate.level3_headers;
+  // 自定义表头（不含"类型"列）
+  let th1='<tr><th rowspan="2" style="width:80px">分类</th>';
+  let th2='<tr>';
+  for(const c of so){
+    const sc=subCols(c);
+    th1+=`<th colspan="${sc.length}" class="hdr">${dn[c]}</th>`;
+    for(const s of sc)th2+=`<th style="font-size:10px">${l3[s]||dl[s]}</th>`;
+  }
+  th1+='</tr>'; th2+='</tr>';
+  // 表体
+  let r='';
+  for(const row of valid){
+    let label=row.label||'';
+    if(label.includes('部门')||label.includes('估维度'))continue;
+    r+='<tr><td class="lb">'+label+'</td>';
+    for(const c of so){const sc=subCols(c);for(const s of sc){
+      const v=row[s];
+      r+=v!=null?`<td class="${pc(v)}">${fpct(v)}</td>`:'<td>-</td>';
+    }}
+    r+='</tr>';
+  }
+  return `<span class="cost-toggle" onclick="
+    var s=this.nextElementSibling;s.style.display=s.style.display==='block'?'none':'block';
+    this.textContent=this.textContent.includes('展开')?'▸ 收起成本分类明细（按费用类型）':'▸ 展开成本分类明细（按费用类型）';
+  ">▸ 展开成本分类明细（按费用类型）</span>
+  <div class="cost-section"><table class="tbl"><thead>${th1}${th2}</thead><tbody>${r}</tbody></table></div>`;
+}
+
+function renderKeyPosTable(d){
+  const data=d.key_position;const l3=data.level3_headers,l2=data.level2_headers;
+  let h='<table class="tbl"><thead><tr><th>指标</th>';
+  for(const c of so){const sc=subCols(c);h+=`<th colspan="${sc.length}" class="hdr">${l2[c]||dn[c]}</th>`}
+  h+='</tr><tr><th></th>';
+  for(const c of so){const sc=subCols(c);for(const s of sc)h+=`<th style="font-size:10px">${l3[s]||dl[s]}</th>`}
+  h+='</tr></thead><tbody>';
+  for(const row of data.data){
+    // Handle empty label (合计 uses sub_label as label)
+    let label=row.label;
+    if(!label&&row.sub_label)label=row.sub_label;
+    if(row.sub_label)label+=' ('+row.sub_label+')';
+    h+='<tr><td class="lb">'+label+'</td>';
+    for(const c of so){const sc=subCols(c);for(const s of sc){
+      const v=row[s];
+      if(v==null){h+='<td>-</td>';continue}
+      h+=(row.label||'').includes('率')?`<td class="${pc(v)}">${fpct(v)}</td>`:`<td>${fnum(v)}</td>`;
+    }}
+    h+='</tr>';
+  }
+  return h+'</tbody></table>';
+}
+
+// ── 人员变动 ──
+function renderChanges(d){
+  const ch=d.personnel_changes;if(!ch)return'<p>暂无</p>';
+  let h='<table class="tbl"><thead>';
+  // 二级部门 header
+  h+='<tr><th rowspan="2">变动类型</th>';
+  for(const c of so){const sc=subCols(c);h+=`<th colspan="${sc.length}" class="hdr">${dn[c]}</th>`}
+  h+='</tr>';
+  // 三级部门 header
+  h+='<tr>';
+  for(const c of so){const sc=subCols(c);for(const s of sc)h+=`<th style="font-size:10px">${dl[s]}</th>`}
+  h+='</tr></thead><tbody>';
+  for(const[k,v]of Object.entries(ch)){
+    h+='<tr><td class="lb">'+k+'</td>';
+    for(const c of so){const sc=subCols(c);for(const s of sc){
+      const t=Number(v[s])||0;
+      if(!t){h+='<td>-</td>';continue}
+      h+=k==='入职'?`<td class="g">+${t}</td>`:k==='离职'?`<td class="r">${t}</td>`:`<td>${t}</td>`;
+    }}
+    h+='</tr>';
+  }
+  h+='</tbody></table>';
+  if(d.changes_analysis)h+=`<div class="ana">${d.changes_analysis}</div>`;
+  return h;
+}
+
+// ── 保留率 ──
+function renderRetention(d){
+  const data=d.retention;if(!data||!data.data)return'<p>暂无</p>';
+  // 双层表头
+  let h='<table class="tbl"><thead>';
+  h+='<tr><th rowspan="2">指标</th>';
+  for(const c of so){const sc=subCols(c);h+=`<th colspan="${sc.length}" class="hdr">${dn[c]}</th>`}
+  h+='</tr><tr>';
+  for(const c of so){const sc=subCols(c);for(const s of sc)h+=`<th style="font-size:10px">${dl[s]}</th>`}
+  h+='</tr></thead><tbody>';
+
+  // 目标/在职/离职
+  let retainedBySec={}; // 留任人才数量按二级部门汇总
+  for(const row of data.data){
+    if(row.label.includes('保留率'))continue;
+    const isTarget=row.label.includes('目标');
+    h+='<tr><td class="lb">'+row.label+'</td>';
+    for(const c of so){const sc=subCols(c);
+      if(isTarget){
+        const v=row[c];
+        h+=v!=null?`<td colspan="${sc.length}">${fnum(v)}</td>`:`<td colspan="${sc.length}">-</td>`;
+      }else{
+        // 在职/离职：展开到三级，同时累加在职人数
+        for(const s of sc){
+          const v=row[s];h+='<td>'+(v!=null?fnum(v):'-')+'</td>';
+          if(row.label.includes('在职'))retainedBySec[c]=(retainedBySec[c]||0)+(Number(row[s])||0);
+        }
+      }
+    }
+    h+='</tr>';
+  }
+
+  // 留任人才数量行（合并二级部门）
+  h+='<tr style="font-weight:700;background:#f5f7fa"><td class="lb">留任人才数量</td>';
+  for(const c of so){const sc=subCols(c);
+    const v=retainedBySec[c]||0;
+    let cls='',display='';
+    for(const row of data.data){
+      if(row.label.includes('目标')){
+        const tgt=Number(row[c])||0;
+        const diff=tgt-v;
+        if(v>0&&tgt>0&&diff>0){
+          cls='r';
+          display=fnum(v)+'<br><span style="font-size:10px;color:#ef4444">-'+diff+'</span>';
+        }else{
+          cls='g';
+          display=fnum(v);
+        }
+        break;
+      }
+    }
+    h+=v?`<td colspan="${sc.length}" class="${cls}">${display}</td>`:`<td colspan="${sc.length}">-</td>`;
+  }
+  h+='</tr>';
+
+  h+='</tbody></table>';
+  h+='<div class="chart-box chart-full" id="chart_retention" style="height:380px;margin-top:12px"></div>';
+  if(data.analysis)h+=`<div class="ana">${data.analysis}</div>`;
+  return h;
+}
+
+// ── 改善建议 ──
+function renderImprove(d){
+  const imp=d.improvements;if(!imp)return'<p>暂无</p>';
+  function tbl(data){
+    if(!data||!Object.keys(data).length)return'<p style="color:#999">暂无数据</p>';
+    let h='<table class="tbl"><thead><tr><th>项目</th><th>week1</th><th>week2</th><th>week3</th><th>week4</th></tr></thead><tbody>';
+    for(const[p,ws]of Object.entries(data)){h+='<tr><td class="lb">'+p+'</td><td>'+(ws.C||'-')+'</td><td>'+(ws.G||'-')+'</td><td>'+(ws.K||'-')+'</td><td>'+(ws.O||'-')+'</td></tr>'}
+    return h+'</tbody></table>';
+  }
+  return '<div class="subsec"><div class="subsec-title">改善建议与措施</div>'+tbl(imp['四月'])+'</div>';
+}
+
+// ── 图表 ──
+function initCharts(d){
+  // 优秀人才留任对比
+  const re=document.getElementById('chart_retention');
+  if(re&&d.retention&&d.retention.data){
+    const c=echarts.init(re);
+    // 提取目标留任人才数量和留任人才数量（在职汇总）按二级部门
+    const targets=[], retained=[];
+    for(const x of so){
+      // 目标值从"目标留任人才数量"行取
+      let tgt=0;
+      for(const row of d.retention.data){if(row.label&&row.label.includes('目标')){tgt=Number(row[x])||0;break}}
+      targets.push(tgt);
+      // 留任值从"在职"行汇总三级部门
+      let ret=0;
+      for(const row of d.retention.data){if(row.label&&row.label.includes('在职')){for(const s of subCols(x))ret+=Number(row[s])||0;break}}
+      retained.push(ret);
+    }
+    c.setOption({title:{text:'优秀人才保留数量',left:'center',textStyle:{fontSize:13}},tooltip:{trigger:'axis'},legend:{data:['目标留任','实际留任'],bottom:0},xAxis:{type:'category',data:so.map(x=>dn[x]),axisLabel:{rotate:30,fontSize:10}},yAxis:{type:'value'},grid:{bottom:70},series:[
+      {name:'目标留任',type:'bar',data:targets,itemStyle:{color:'#b0c4de'},barGap:'10%'},
+      {name:'实际留任',type:'bar',data:retained,itemStyle:{color:function(p){return p.value>=targets[p.dataIndex]?'#10b981':'#ef4444'}}}
+    ]});
+  }
+}
+
+function initFillRateChart(d){
+  const fe=document.getElementById('chart_fillrate');if(!fe)return;
+  const c=echarts.init(fe);const fr=[];
+  for(const row of d.fill_rate.data){if(row.label&&row.label.includes('满编率')){for(const x of ac)fr.push(row[x]!=null?Number((row[x]*100).toFixed(1)):0);break}}
+  c.setOption({title:{text:'各部门满编率',left:'center',textStyle:{fontSize:13}},tooltip:{trigger:'axis',formatter:p=>p[0].name+'<br/>满编率: <b>'+p[0].value+'%</b>'},xAxis:{type:'category',data:ac.map(x=>dl[x]),axisLabel:{rotate:30,fontSize:10}},yAxis:{type:'value',max:100,axisLabel:{formatter:'{value}%'}},grid:{bottom:70},series:[{type:'bar',data:fr,itemStyle:{color:function(p){return p.value>=90?'#10b981':p.value>=80?'#1890ff':p.value>=60?'#f59e0b':'#ef4444'}}}]});
+}
+function initKeyFillChart(d){
+  const kfe=document.getElementById('chart_key_fill');if(!kfe)return;
+  const c=echarts.init(kfe);const kr=[];
+  for(const row of d.key_position.data){if(row.label&&row.label.includes('满编率')&&row.sub_label&&row.sub_label.includes('小计')){for(const x of ac)kr.push(row[x]!=null?Number((row[x]*100).toFixed(1)):0);break}}
+  c.setOption({title:{text:'关键岗位满编率',left:'center',textStyle:{fontSize:13}},tooltip:{trigger:'axis'},xAxis:{type:'category',data:ac.map(x=>dl[x]),axisLabel:{rotate:30,fontSize:10}},yAxis:{type:'value',max:100,axisLabel:{formatter:'{value}%'}},grid:{bottom:70},series:[{type:'bar',data:kr,itemStyle:{color:function(p){return p.value>=90?'#10b981':p.value>=80?'#1890ff':p.value>=60?'#f59e0b':'#ef4444'}}}]});
+}
+function initKeyCompChart(d){
+  const kce=document.getElementById('chart_key_comp');if(!kce)return;
+  const c=echarts.init(kce);const cr=[];
+  for(const row of d.key_position.data){if(row.label&&(row.label.includes('胜任')||row.label.includes('胜任率'))&&row.sub_label&&row.sub_label.includes('小计')){for(const x of ac)cr.push(row[x]!=null?Number((row[x]*100).toFixed(1)):0);break}}
+  c.setOption({title:{text:'核心人员胜任率',left:'center',textStyle:{fontSize:13}},tooltip:{trigger:'axis'},xAxis:{type:'category',data:ac.map(x=>dl[x]),axisLabel:{rotate:30,fontSize:10}},yAxis:{type:'value',max:100,axisLabel:{formatter:'{value}%'}},grid:{bottom:70},series:[{type:'bar',data:cr,itemStyle:{color:function(p){return p.value>=90?'#10b981':p.value>=80?'#1890ff':p.value>=60?'#f59e0b':'#ef4444'}}}]});
+}
+
+window.addEventListener('resize',()=>{document.querySelectorAll('.chart-box').forEach(el=>{const i=echarts.getInstanceByDom(el);if(i)i.resize()})});
+
+// ── Lightbox with zoom & pan ──
+let lbScale=1,lbMinScale=.3,lbMaxScale=5,lbPanX=0,lbPanY=0,lbDragging=false,lbStartX=0,lbStartY=0,lbLastPanX=0,lbLastPanY=0;
+
+function previewImage(el){
+  const img=document.getElementById('lightboxImg');img.src=el.src;img.style.transform='';
+  lbScale=1;lbPanX=0;lbPanY=0;updateZoomLabel();
+  document.getElementById('lightbox').classList.add('show');
+  setTimeout(fitImage,200);
+}
+
+function closePreview(){document.getElementById('lightbox').classList.remove('show')}
+
+function fitImage(){
+  const img=document.getElementById('lightboxImg');if(!img.naturalWidth)return;
+  const vw=window.innerWidth*.92,vh=window.innerHeight*.88;
+  const s=Math.min(vw/img.naturalWidth,vh/img.naturalHeight,1);
+  lbScale=s;lbPanX=0;lbPanY=0;applyTransform();updateZoomLabel();
+}
+
+function applyTransform(){document.getElementById('lightboxImg').style.transform=`translate(${lbPanX}px,${lbPanY}px) scale(${lbScale})`}
+function updateZoomLabel(){const el=document.getElementById('zoomPct');if(el)el.textContent=Math.round(lbScale*100)+'%'}
+
+function zoomIn(){lbScale=Math.min(lbScale*1.4,lbMaxScale);applyTransform();updateZoomLabel()}
+function zoomOut(){lbScale=Math.max(lbScale/1.4,lbMinScale);applyTransform();updateZoomLabel()}
+function zoomReset(){lbScale=1;lbPanX=0;lbPanY=0;applyTransform();updateZoomLabel()}
+function zoomFit(){fitImage()}
+
+// mouse wheel zoom
+document.getElementById('lightbox').addEventListener('wheel',function(e){
+  e.preventDefault();const d=e.deltaY<0?1.1:0.9;lbScale=Math.min(lbMaxScale,Math.max(lbMinScale,lbScale*d));
+  applyTransform();updateZoomLabel();
+},{passive:false});
+
+// drag to pan
+(function(){
+  const img=document.getElementById('lightboxImg');
+  img.addEventListener('mousedown',function(e){
+    e.preventDefault();lbDragging=true;img.classList.add('grabbing');
+    lbStartX=e.clientX-lbPanX;lbStartY=e.clientY-lbPanY;
+  });
+  window.addEventListener('mousemove',function(e){
+    if(!lbDragging)return;lbPanX=e.clientX-lbStartX;lbPanY=e.clientY-lbStartY;applyTransform();
+  });
+  window.addEventListener('mouseup',function(){
+    if(lbDragging){lbDragging=false;img.classList.remove('grabbing')}
+  });
+})();
+
+// double-click to toggle between fit and 100%
+document.getElementById('lightboxImg').addEventListener('dblclick',function(e){
+  e.stopPropagation();
+  if(lbScale<.99){zoomReset()}else{fitImage()}
+});
+
+// keyboard controls
+document.addEventListener('keydown',function(e){
+  if(!document.getElementById('lightbox').classList.contains('show'))return;
+  if(e.key==='Escape')closePreview();
+  if(e.key==='+'||e.key==='='){e.preventDefault();zoomIn()}
+  if(e.key==='-'){e.preventDefault();zoomOut()}
+  if(e.key==='0'){e.preventDefault();zoomReset()}
+});
+
+init();
+</script>
+</body>
+</html>

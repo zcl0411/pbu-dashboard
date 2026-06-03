@@ -1,0 +1,411 @@
+#!/usr/bin/env python3
+"""
+PBU组织能力看板 - 数据处理器
+读取月度Excel数据源，提取所有看板指标，输出结构化JSON
+"""
+
+import json
+import re
+import sys
+from pathlib import Path
+from datetime import datetime
+
+import openpyxl
+import pandas as pd
+
+# ── 部门结构定义 ──────────────────────────────────
+SECONDARY_DEPTS = [
+    "欧洲一区", "欧洲二区", "欧洲三区", "澳洲区", "日本区",
+    "北美区", "四海捷运项目部", "经营管理部", "销售客服部", "交付运营部", "PBU技术部"
+]
+
+# 二级 → 三级映射
+DEPT_LEVEL3 = {
+    "欧洲一区": ["丹麦区", "英国区", "荷兰区"],
+    "欧洲二区": ["比利时区", "法国区"],
+    "欧洲三区": ["西班牙区", "意大利区", "匈牙利区"],
+    "澳洲区": ["澳洲区"],
+    "日本区": ["日本区"],
+    "北美区": ["北美区"],
+    "四海捷运项目部": ["四海捷运项目部"],
+    "经营管理部": ["经营管理部"],
+    "销售客服部": ["销售客服部"],
+    "交付运营部": ["交付运营部"],
+    "PBU技术部": ["PBU技术部"],
+}
+
+# 成本分类（按看板顺序）
+COST_TYPES = ["销售费用", "提货成本", "清关成本", "库操成本", "管理费用", "调度成本", "地勤业务成本"]
+
+# 科室颜色方案
+COLORS = ["#5470C6","#91CC75","#FAC858","#EE6666","#73C0DE","#3BA272","#FC8452",
+           "#9A60B4","#EA7CCC","#E6A23C","#67C23A"]
+
+
+def load_workbook(filepath):
+    """加载Excel文件"""
+    return openpyxl.load_workbook(filepath, data_only=True)
+
+
+def parse_assessment(ws):
+    """解析 一、组织能力评估结果 (rows 1-9)"""
+    # Row 5-8: 4 dimensions × dept columns
+    dims = ["组织能力", "组织架构", "人才密度", "文化氛围"]
+    col_map = {
+        "PBU": "B", "丹麦区": "C", "英国区": "D", "荷兰区": "E",
+        "比利时区": "F", "法国区": "G", "西班牙区": "H", "意大利区": "I",
+        "匈牙利区": "J", "澳洲区": "K", "日本区": "L", "北美区": "M",
+        "四海捷运项目部": "N", "经营管理部": "O", "销售客服部": "P",
+        "交付运营部": "Q", "PBU技术部": "R",
+        "欧洲一区": "C", "欧洲二区": "F", "欧洲三区": "H",  # 二级汇总
+    }
+
+    result = {}
+    for i, dim in enumerate(dims):
+        row = 5 + i
+        vals = {}
+        for dept, col in col_map.items():
+            cell_val = ws[f"{col}{row}"].value
+            if cell_val:
+                vals[dept] = str(cell_val).strip()
+
+        # 将二级部门的值传播到子区域
+        sub_dept_map = {
+            ("欧洲一区","C"): [("丹麦区","C"), ("英国区","D"), ("荷兰区","E")],
+            ("欧洲二区","F"): [("比利时区","F"), ("法国区","G")],
+            ("欧洲三区","H"): [("西班牙区","H"), ("意大利区","I"), ("匈牙利区","J")],
+        }
+        for (sec_dept, sec_col), sub_deps in sub_dept_map.items():
+            if sec_dept in vals:
+                for sub_dept, _ in sub_deps:
+                    if sub_dept not in vals:
+                        vals[sub_dept] = vals[sec_dept]
+
+        result[dim] = vals
+
+    # Row 9: analysis text
+    analysis = ws["A9"].value or ""
+    return result, str(analysis)
+
+
+def parse_headcount_summary(ws):
+    """解析 三、PBU人才密度总览 (rows 13-15)"""
+    def pct(val):
+        if val is None:
+            return None
+        if isinstance(val, (int, float)):
+            return round(float(val), 4)
+        return val
+
+    return {
+        "编制总数": ws["C14"].value,
+        "在职总数": ws["F14"].value,
+        "空编数": ws["I14"].value,
+        "满编率": pct(ws["L14"].value),
+        "核心人员胜任率": pct(ws["O14"].value),
+        "优秀人才保留率": pct(ws["R14"].value),
+        "关键岗位_编制总数": ws["C15"].value,
+        "关键岗位_在职人数": ws["F15"].value,
+        "关键岗位_空编数": ws["I15"].value,
+        "关键岗位_满编率": pct(ws["L15"].value),
+    }
+
+
+def parse_dept_table(ws, start_row, end_row, label_col="A", data_start_col="C"):
+    """解析通用部门表格（如编制、在职）"""
+    # Row start_row: 二级部门 header
+    # Row start_row+1: 三级部门 header
+    # Rows start_row+2 to end_row: cost type rows + data
+    dept_headers = {}
+    for col_letter in ['C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R']:
+        val = ws[f"{col_letter}{start_row}"].value
+        if val:
+            dept_headers[col_letter] = str(val).strip()
+
+    level3_headers = {}
+    for col_letter in ['C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R']:
+        val = ws[f"{col_letter}{start_row+1}"].value
+        if val:
+            level3_headers[col_letter] = str(val).strip()
+
+    # Read all rows between start_row+2 and end_row
+    data_rows = []
+    for row_num in range(start_row + 2, end_row + 1):
+        row_label = ws[f"A{row_num}"].value
+        row_type = ws[f"B{row_num}"].value  # 白领/灰领
+        if row_label is None and row_type is None:
+            continue
+
+        row_data = {"label": str(row_label).strip() if row_label else "",
+                     "type": str(row_type).strip() if row_type else ""}
+        for col_letter in ['C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R']:
+            val = ws[f"{col_letter}{row_num}"].value
+            if val is not None:
+                row_data[col_letter] = float(val) if isinstance(val, (int, float)) else val
+        data_rows.append(row_data)
+
+    return {
+        "level2_headers": dept_headers,
+        "level3_headers": level3_headers,
+        "data": data_rows
+    }
+
+
+def parse_establishment(ws):
+    """3.1 各部门编制数展示 (rows 17-28)"""
+    return parse_dept_table(ws, 18, 27)
+
+
+def parse_headcount_actual(ws):
+    """3.2 各部门在职人数展示 (rows 29-39)"""
+    return parse_dept_table(ws, 30, 39)
+
+
+def parse_fill_rate(ws):
+    """3.3 各部门满编率展示 (rows 40-54)"""
+    # Headers: row 41=二级, row 42=三级
+    dept_headers = {}
+    level3_headers = {}
+    for col_letter in ['C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R']:
+        v2 = ws[f"{col_letter}41"].value
+        v3 = ws[f"{col_letter}42"].value
+        if v2: dept_headers[col_letter] = str(v2).strip()
+        if v3: level3_headers[col_letter] = str(v3).strip()
+
+    # Data rows (rows 43-52)
+    data_rows = []
+    for row_num in range(43, 53):
+        row_label = ws[f"A{row_num}"].value
+        if row_label is None:
+            continue
+        row_data = {"label": str(row_label).strip()}
+        for col_letter in ['C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R']:
+            val = ws[f"{col_letter}{row_num}"].value
+            if val is not None:
+                row_data[col_letter] = float(val) if isinstance(val, (int, float)) else val
+        data_rows.append(row_data)
+
+    # Analysis text (now at row 54)
+    analysis = ws["A54"].value or ""
+
+    # Filter cost_detail: exclude rows with non-cost labels
+    cost_rows = []
+    for row in data_rows[3:]:
+        lbl = row.get("label", "")
+        if not lbl or "关键岗位" in lbl or "数据分析" in lbl or "部门" in lbl or "二级" in lbl or "三级" in lbl or "3." in lbl:
+            continue
+        cost_rows.append(row)
+
+    return {
+        "level2_headers": dept_headers,
+        "level3_headers": level3_headers,
+        "data": data_rows[0:3],          # 部门编制数, 部门在职数, 部门满编率
+        "cost_detail": cost_rows,
+        "analysis": str(analysis)
+    }
+
+
+def parse_key_position(ws):
+    """3.4 关键岗位满编率 & 核心人员胜任率 (rows 55-66)"""
+    # Headers: row 56=二级, row 57=三级
+    l2_headers = {}
+    l3_headers = {}
+    for col_letter in ['C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R']:
+        v2 = ws[f"{col_letter}56"].value
+        v3 = ws[f"{col_letter}57"].value
+        if v2: l2_headers[col_letter] = str(v2).strip()
+        if v3: l3_headers[col_letter] = str(v3).strip()
+
+    # Data rows (rows 58-64): 编制数, 在岗人数, 胜任人数, 满编率(小计/合计), 胜任率(小计/合计)
+    data_rows = []
+    for row_num in range(58, 65):
+        row_label = ws[f"A{row_num}"].value
+        b_val = ws[f"B{row_num}"].value
+        if row_label is None and b_val is None:
+            continue
+        # Handle merged A: if B has value but A is None, use last label
+        row_data = {"label": str(row_label).strip() if row_label else ""}
+        if b_val:
+            row_data["sub_label"] = str(b_val).strip()
+        for col_letter in ['C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R']:
+            val = ws[f"{col_letter}{row_num}"].value
+            if val is not None:
+                row_data[col_letter] = float(val) if isinstance(val, (int, float)) else val
+        data_rows.append(row_data)
+
+    analysis = ws["A66"].value or ""
+    return {"level2_headers": l2_headers, "level3_headers": l3_headers, "data": data_rows, "analysis": str(analysis)}
+
+
+def parse_personnel_changes(ws):
+    """四、各部门月度人员变动展示 (rows 67-73)"""
+    result = {}
+    for row_num in range(70, 73):
+        label = ws[f"A{row_num}"].value
+        if label is None:
+            continue
+        key = str(label).strip()
+        vals = {}
+        for col_letter in ['C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R']:
+            val = ws[f"{col_letter}{row_num}"].value
+            if val is not None:
+                vals[col_letter] = int(val) if isinstance(val, (int, float)) else val
+        result[key] = vals
+
+    analysis = ws["A73"].value or ""
+    return result, str(analysis)
+
+
+def parse_retention(ws):
+    """五、优秀人才保留率 (rows 74-83)"""
+    data_rows = []
+    last_label = None
+    for row_num in range(77, 82):
+        row_label = ws[f"A{row_num}"].value
+        b_val = ws[f"B{row_num}"].value
+        # Handle merged cells: if A is None but B has value, use last A label
+        label = str(row_label).strip() if row_label else (last_label if b_val else None)
+        if label is None and b_val is None:
+            continue
+        last_label = label
+        row_data = {"label": label or ""}
+        if b_val:
+            row_data["sub_label"] = str(b_val).strip()
+        for col_letter in ['C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R']:
+            val = ws[f"{col_letter}{row_num}"].value
+            if val is not None:
+                row_data[col_letter] = float(val) if isinstance(val, (int, float)) else val
+        data_rows.append(row_data)
+
+    analysis = ws["A83"].value or ""
+    return {"data": data_rows, "analysis": str(analysis)}
+
+
+def parse_improvements(ws):
+    """六、改善建议与措施 (rows 84-94)"""
+    # 四月例行项目
+    april_data = {}
+    for row_num in range(87, 93):
+        label = ws[f"A{row_num}"].value
+        if label is None:
+            continue
+        vals = {}
+        for col_letter in ['C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R']:
+            val = ws[f"{col_letter}{row_num}"].value
+            if val is not None:
+                vals[col_letter] = str(val).strip()
+        april_data[str(label).strip()] = vals
+
+    return {"四月": april_data}
+
+
+def parse_dashboard_sheet(filepath, month_str):
+    """Main entry: parse the 组织能力月度看板 sheet"""
+    wb = load_workbook(filepath)
+
+    # Find the main dashboard sheet
+    sheet_name = None
+    for name in wb.sheetnames:
+        if "看板" in name or "组织能力月度" in name:
+            sheet_name = name
+            break
+    if sheet_name is None:
+        sheet_name = wb.sheetnames[0]
+
+    ws = wb[sheet_name]
+
+    assessment, assessment_analysis = parse_assessment(ws)
+    summary = parse_headcount_summary(ws)
+    establishment = parse_establishment(ws)
+    actual_headcount = parse_headcount_actual(ws)
+    fill_rate = parse_fill_rate(ws)
+    key_position = parse_key_position(ws)
+    changes, changes_analysis = parse_personnel_changes(ws)
+    retention = parse_retention(ws)
+    improvements = parse_improvements(ws)
+
+    # Org chart text
+    org_chart = ws["A12"].value or ""
+
+    return {
+        "month": month_str,
+        "assessment": assessment,
+        "assessment_analysis": assessment_analysis,
+        "summary": summary,
+        "org_chart": str(org_chart),
+        "establishment": establishment,
+        "actual_headcount": actual_headcount,
+        "fill_rate": fill_rate,
+        "key_position": key_position,
+        "personnel_changes": changes,
+        "changes_analysis": changes_analysis,
+        "retention": retention,
+        "improvements": improvements,
+    }
+
+
+def save_json(data, filepath):
+    """保存JSON，处理None和NaN"""
+    def default_handler(obj):
+        if obj is None:
+            return None
+        if isinstance(obj, float):
+            if pd.isna(obj) or obj != obj:
+                return None
+        return obj
+
+    with open(filepath, 'w', encoding='utf-8') as f:
+        json.dump(data, f, ensure_ascii=False, indent=2, default=default_handler)
+
+
+def main():
+    if len(sys.argv) < 2:
+        print("Usage: python process_data.py <excel_path> [month_label]")
+        print(" Example: python process_data.py 'PBU组织能力看板-2026年5月-示例1.xlsx' '2026-05'")
+        sys.exit(1)
+
+    excel_path = sys.argv[1]
+    if len(sys.argv) >= 3:
+        month_label = sys.argv[2]
+    else:
+        # Extract month from filename
+        match = re.search(r'(\d{4})年(\d{1,2})月', excel_path)
+        if match:
+            month_label = f"{match.group(1)}-{int(match.group(2)):02d}"
+        else:
+            month_label = datetime.now().strftime("%Y-%m")
+
+    print(f"[处理] 文件: {excel_path}")
+    print(f"[月份] 标识: {month_label}")
+
+    # Parse dashboard
+    dashboard_data = parse_dashboard_sheet(excel_path, month_label)
+
+    # Save to data directory
+    script_dir = Path(__file__).parent
+    data_dir = script_dir / "data"
+    data_dir.mkdir(exist_ok=True)
+
+    output_path = data_dir / f"{month_label}.json"
+    save_json(dashboard_data, str(output_path))
+
+    print(f"[OK] 数据已保存: {output_path}")
+
+    # Also update month index
+    index_path = data_dir / "months.json"
+    existing_months = []
+    if index_path.exists():
+        with open(index_path, 'r', encoding='utf-8') as f:
+            existing_months = json.load(f)
+
+    if month_label not in existing_months:
+        existing_months.append(month_label)
+        existing_months.sort()
+        save_json(existing_months, str(index_path))
+
+    print(f"[月] 可用月份: {existing_months}")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
