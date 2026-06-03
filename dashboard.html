@@ -466,22 +466,39 @@ function renderCostDetail(d){
 
 function renderKeyPosTable(d){
   const data=d.key_position;const l3=data.level3_headers,l2=data.level2_headers;
-  let h='<table class="tbl"><thead><tr><th>指标</th>';
+  let h='<table class="tbl"><thead><tr><th rowspan="2">指标</th>';
   for(const c of so){const sc=subCols(c);h+=`<th colspan="${sc.length}" class="hdr">${l2[c]||dn[c]}</th>`}
-  h+='</tr><tr><th></th>';
+  h+='</tr><tr>';
   for(const c of so){const sc=subCols(c);for(const s of sc)h+=`<th style="font-size:10px">${l3[s]||dl[s]}</th>`}
   h+='</tr></thead><tbody>';
+  // Track 合计 index for 满编率 and 胜任率
+  let totalCount=0;
   for(const row of data.data){
-    // Handle empty label (合计 uses sub_label as label)
     let label=row.label;
-    if(!label&&row.sub_label)label=row.sub_label;
-    if(row.sub_label)label+=' ('+row.sub_label+')';
-    h+='<tr><td class="lb">'+label+'</td>';
-    for(const c of so){const sc=subCols(c);for(const s of sc){
-      const v=row[s];
-      if(v==null){h+='<td>-</td>';continue}
-      h+=(row.label||'').includes('率')?`<td class="${pc(v)}">${fpct(v)}</td>`:`<td>${fnum(v)}</td>`;
-    }}
+    const sub=row.sub_label||'';
+    const isTotal=sub==='合计';
+    if(isTotal){
+      totalCount++;
+      // First 合计 → 关键岗位满编率, second 合计 → 核心人员胜任率
+      label=totalCount===1?'关键岗位满编率（合计）':'核心人员胜任率（合计）';
+    }else if(sub){
+      label+=' ('+sub+')';
+    }
+    if(!label&&!isTotal)label=sub;
+    h+='<tr'+(isTotal?' style="font-weight:700;background:#f5f7fa"':'')+'><td class="lb">'+label+'</td>';
+    for(const c of so){const sc=subCols(c);
+      if(isTotal){
+        // 合计行：二级部门维度，合并子列
+        const v=row[c];
+        h+=v!=null?`<td colspan="${sc.length}" class="${pc(v)}">${fpct(v)}</td>`:`<td colspan="${sc.length}">-</td>`;
+      }else{
+        for(const s of sc){
+          const v=row[s];
+          if(v==null){h+='<td>-</td>';continue}
+          h+=(label||'').includes('率')?`<td class="${pc(v)}">${fpct(v)}</td>`:`<td>${fnum(v)}</td>`;
+        }
+      }
+    }
     h+='</tr>';
   }
   return h+'</tbody></table>';
@@ -620,14 +637,25 @@ function initFillRateChart(d){
 function initKeyFillChart(d){
   const kfe=document.getElementById('chart_key_fill');if(!kfe)return;
   const c=echarts.init(kfe);const kr=[];
-  for(const row of d.key_position.data){if(row.label&&row.label.includes('满编率')&&row.sub_label&&row.sub_label.includes('小计')){for(const x of ac)kr.push(row[x]!=null?Number((row[x]*100).toFixed(1)):0);break}}
-  c.setOption({title:{text:'关键岗位满编率',left:'center',textStyle:{fontSize:13}},tooltip:{trigger:'axis'},xAxis:{type:'category',data:ac.map(x=>dl[x]),axisLabel:{rotate:30,fontSize:10}},yAxis:{type:'value',max:100,axisLabel:{formatter:'{value}%'}},grid:{bottom:70},series:[{type:'bar',data:kr,itemStyle:{color:function(p){return p.value>=90?'#10b981':p.value>=80?'#1890ff':p.value>=60?'#f59e0b':'#ef4444'}}}]});
+  // 使用合计数据（二级部门维度），按出现顺序区分满编率合计和胜任率合计
+  let totalIdx=0;
+  for(const row of d.key_position.data){
+    if(row.sub_label&&row.sub_label.includes('合计')){totalIdx++;
+      if(totalIdx===1){for(const x of so)kr.push(row[x]!=null?Number((row[x]*100).toFixed(1)):0);break}
+    }
+  }
+  c.setOption({title:{text:'关键岗位满编率',left:'center',textStyle:{fontSize:13}},tooltip:{trigger:'axis'},xAxis:{type:'category',data:so.map(x=>dn[x]),axisLabel:{rotate:30,fontSize:10}},yAxis:{type:'value',max:100,axisLabel:{formatter:'{value}%'}},grid:{bottom:70},series:[{type:'bar',data:kr,itemStyle:{color:function(p){return p.value>=90?'#10b981':p.value>=80?'#1890ff':p.value>=60?'#f59e0b':'#ef4444'}}}]});
 }
 function initKeyCompChart(d){
   const kce=document.getElementById('chart_key_comp');if(!kce)return;
   const c=echarts.init(kce);const cr=[];
-  for(const row of d.key_position.data){if(row.label&&(row.label.includes('胜任')||row.label.includes('胜任率'))&&row.sub_label&&row.sub_label.includes('小计')){for(const x of ac)cr.push(row[x]!=null?Number((row[x]*100).toFixed(1)):0);break}}
-  c.setOption({title:{text:'核心人员胜任率',left:'center',textStyle:{fontSize:13}},tooltip:{trigger:'axis'},xAxis:{type:'category',data:ac.map(x=>dl[x]),axisLabel:{rotate:30,fontSize:10}},yAxis:{type:'value',max:100,axisLabel:{formatter:'{value}%'}},grid:{bottom:70},series:[{type:'bar',data:cr,itemStyle:{color:function(p){return p.value>=90?'#10b981':p.value>=80?'#1890ff':p.value>=60?'#f59e0b':'#ef4444'}}}]});
+  let totalIdx=0;
+  for(const row of d.key_position.data){
+    if(row.sub_label&&row.sub_label.includes('合计')){totalIdx++;
+      if(totalIdx===2){for(const x of so)cr.push(row[x]!=null?Number((row[x]*100).toFixed(1)):0);break}
+    }
+  }
+  c.setOption({title:{text:'核心人员胜任率',left:'center',textStyle:{fontSize:13}},tooltip:{trigger:'axis'},xAxis:{type:'category',data:so.map(x=>dn[x]),axisLabel:{rotate:30,fontSize:10}},yAxis:{type:'value',max:100,axisLabel:{formatter:'{value}%'}},grid:{bottom:70},series:[{type:'bar',data:cr,itemStyle:{color:function(p){return p.value>=90?'#10b981':p.value>=80?'#1890ff':p.value>=60?'#f59e0b':'#ef4444'}}}]});
 }
 
 window.addEventListener('resize',()=>{document.querySelectorAll('.chart-box').forEach(el=>{const i=echarts.getInstanceByDom(el);if(i)i.resize()})});
