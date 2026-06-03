@@ -232,8 +232,8 @@ function renderSummary(d){
   function it(l,v,c,sub){return `<div class="summary-item"><div class="sl">${l}</div><div class="sv ${c||''}">${v}</div>${sub?`<div class="summary-sub">${sub}</div>`:''}</div>`}
   function sp(){return '<div class="summary-sep"></div>'}
   return `<div class="summary-cards">
-    <div class="summary-row">${it('PBU 编制总数',fnum(s.编制总数),'','不含蓝领/实习生/外包')}${sp()}${it('PBU 在职总数',fnum(s.在职总数),'','不含蓝领')}${sp()}${it('PBU 空编数',fnum(s.空编数),'o','空缺岗位')}${sp()}${it('PBU 满编率',fpct(s.满编率),rc(s.满编率),'在职/编制')}${sp()}${it('核心人员胜任率',fpct(s.核心人员胜任率),rc(s.核心人员胜任率),'盘点12345格子')}${sp()}${it('优秀人才保留率',fpct(s.优秀人才保留率),'g','123+评优+破格晋升')}</div>
-    <div class="summary-row">${it('关键岗位 编制总数',fnum(s.关键岗位_编制总数),'','所有AB类')}${sp()}${it('关键岗位 在职人数',fnum(s.关键岗位_在职人数))}${sp()}${it('关键岗位 空编数',fnum(s.关键岗位_空编数),'o')}${sp()}${it('关键岗位 满编率',fpct(s.关键岗位_满编率),rc(s.关键岗位_满编率),'在岗/编制')}</div>
+    <div class="summary-row">${it('PBU 编制总数',fnum(s.编制总数),'','不含蓝领/实习生/外包')}${sp()}${it('PBU 在职总数',fnum(s.在职总数),'','不含蓝领')}${sp()}${it('PBU 空编数',fnum(s.空编数),'o','空缺岗位')}${sp()}${it('PBU 满编率',fpct(s.满编率),rc(s.满编率),'在职/编制')}</div>
+    <div class="summary-row">${it('关键岗位 编制总数',fnum(s.关键岗位_编制总数),'','所有AB类')}${sp()}${it('关键岗位 在职人数',fnum(s.关键岗位_在职人数))}${sp()}${it('关键岗位 空编数',fnum(s.关键岗位_空编数),'o')}${sp()}${it('关键岗位 满编率',fpct(s.关键岗位_满编率),rc(s.关键岗位_满编率),'在岗/编制')}${sp()}${it('核心人员胜任率',fpct(s.核心人员胜任率),rc(s.核心人员胜任率),'盘点12345格子')}${sp()}${it('优秀人才保留率',fpct(s.优秀人才保留率),'g','123+评优+破格晋升')}</div>
   </div>`;
 }
 
