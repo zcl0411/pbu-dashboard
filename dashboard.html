@@ -211,9 +211,9 @@ function render(m){
   let h='';
   h+=sec('一、组织能力评估结果','s1',renderAssess(d),1);
   h+=sec('二、PBU组织架构图','s2',renderOrg(d),1);
-  h+=sec('三、PBU人才密度总览（不含蓝领）','s3',renderSummary(d)+renderDensity(d),1);
+  h+=sec('三、PBU人才密度总览（不含蓝领）','s3',renderSummary(d)+renderDensity(d));
   h+=sec('四、各部门月度人员变动展示','s4',renderChanges(d));
-  h+=sec('五、各部门优秀人才保留数量','s5',renderRetention(d),1);
+  h+=sec('五、各部门优秀人才保留数量','s5',renderRetention(d));
   h+=sec('六、改善建议与措施','s6',renderImprove(d));
   document.getElementById('app').innerHTML=h;
   setTimeout(()=>{initCharts(d)},300);
