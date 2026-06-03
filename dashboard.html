@@ -500,10 +500,11 @@ function renderKeyPosTable(d){
         const v=row[c];
         h+=v!=null?`<td colspan="${sc.length}" class="${pc(v)}">${fpct(v)}</td>`:`<td colspan="${sc.length}">-</td>`;
       }else{
+        // 小计行：不进行颜色标注，仅显示百分比数值
         for(const s of sc){
           const v=row[s];
           if(v==null){h+='<td>-</td>';continue}
-          h+=(label||'').includes('率')?`<td class="${pc(v)}">${fpct(v)}</td>`:`<td>${fnum(v)}</td>`;
+          h+=(label||'').includes('率')?`<td>${fpct(v)}</td>`:`<td>${fnum(v)}</td>`;
         }
       }
     }
