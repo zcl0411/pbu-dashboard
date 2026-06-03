@@ -245,7 +245,7 @@ function renderAssess(d){
   let h='<table class="atbl"><thead><tr><th rowspan="2">评估维度</th>';
   for(const c of cols)h+=c.n>1?`<th colspan="${c.n}">${c.l}</th>`:`<th rowspan="2">${c.l}</th>`;
   h+='</tr><tr>';
-  for(const c of cols){if(c.n===3)h+='<th>丹麦</th><th>英国</th><th>荷兰</th>';else if(c.n===2)h+='<th>比利时</th><th>法国</th>'}
+  for(const c of cols){if(c.n===3)h+='<th>丹麦区</th><th>英国区</th><th>荷兰区</th>';else if(c.n===2)h+='<th>比利时区</th><th>法国区</th>'}
   h+='</tr></thead><tbody>';
   for(const dim of dims){
     h+='<tr><td class="dl">'+dim+'</td>';
