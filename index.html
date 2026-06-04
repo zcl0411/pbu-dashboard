@@ -262,7 +262,6 @@ function renderAssess(d){
     h+='</tr>';
   }
   h+='</tbody></table>';
-  if(d.assessment_analysis)h+=`<div class="ana">▶ ${d.assessment_analysis}</div>`;
   return h;
 }
 
@@ -272,7 +271,7 @@ function renderOrg(d){
     <img src="org_chart.png" class="org-preview" onclick="previewImage(this)" alt="PBU组织架构图" title="点击预览大图">
     <p style="margin-top:8px;font-size:12px;color:#888">点击图片查看大图</p>
   </div>
-  <div class="ana">▶ PBU组织架构调整：内容后续再加上</div>`;
+  <div class="ana">PBU组织架构调整：本月暂无</div>`;
 }
 
 // ── 人才密度（3.1/3.2/3.3/3.4  Tab切换） ──
@@ -281,7 +280,7 @@ function renderDensity(d){
   // 取数口径
   h+=`<div class="subsec"><div class="subsec-title">取数口径</div>
     <p style="font-size:12px;color:#888;line-height:1.8">编制及在岗人数均不含实习生、外包、蓝领；<br>
-    ①"关键岗位"指承载关键组织职责和目标的岗位(所有AB类)；②"核心人员"指关键岗位在岗人员；③"核心人员胜任"指关键岗位在岗人员年度人才盘点在12345格子；④"优秀人才"指人才盘点123+集团及BU评优+破格晋升</p></div>`;
+    ①"关键岗位"指承载关键组织职责和目标的岗位(所有AB类)；②"核心人员"指关键岗位在岗人员；③"核心人员胜任"指关键岗位在岗人员年度人才盘点在1235格子；④"优秀人才"指人才盘点123格子+集团及BU年度评优+破格晋升人员</p></div>`;
 
   // Tab bar
   h+='<div class="tb"><span class="on" onclick="switchTab(event,\'t31\')">3.1 编制数</span><span onclick="switchTab(event,\'t32\')">3.2 在职人数</span><span onclick="switchTab(event,\'t33\')">3.3 满编率</span><span onclick="switchTab(event,\'t34\')">3.4 关键岗位</span></div>';
