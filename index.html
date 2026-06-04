@@ -520,7 +520,7 @@ function renderChanges(d){
   const ch=d.personnel_changes;if(!ch)return'<p>暂无</p>';
   let h='<table class="tbl"><thead>';
   // 二级部门 header
-  h+='<tr><th rowspan="2">变动类型</th>';
+  h+='<tr><th rowspan="2">变动类型</th><th rowspan="2" style="width:70px">PBU</th>';
   for(const c of so){const sc=subCols(c);h+=`<th colspan="${sc.length}" class="hdr">${dn[c]}</th>`}
   h+='</tr>';
   // 三级部门 header
@@ -528,7 +528,7 @@ function renderChanges(d){
   for(const c of so){const sc=subCols(c);for(const s of sc)h+=`<th style="font-size:10px">${dl[s]}</th>`}
   h+='</tr></thead><tbody>';
   for(const[k,v]of Object.entries(ch)){
-    h+='<tr><td class="lb">'+k+'</td>';
+    h+='<tr><td class="lb">'+k+'</td><td>'+fnum(Object.values(v).reduce((a,b)=>a+(Number(b)||0),0)||null)+'</td>';
     for(const c of so){const sc=subCols(c);for(const s of sc){
       const t=Number(v[s])||0;
       if(!t){h+='<td>-</td>';continue}
@@ -546,7 +546,7 @@ function renderRetention(d){
   const data=d.retention;if(!data||!data.data)return'<p>暂无</p>';
   // 双层表头
   let h='<table class="tbl"><thead>';
-  h+='<tr><th rowspan="2">指标</th>';
+  h+='<tr><th rowspan="2">指标</th>'+pbuHdr();
   for(const c of so){const sc=subCols(c);h+=`<th colspan="${sc.length}" class="hdr">${dn[c]}</th>`}
   h+='</tr><tr>';
   for(const c of so){const sc=subCols(c);for(const s of sc)h+=`<th style="font-size:10px">${dl[s]}</th>`}
@@ -560,7 +560,11 @@ function renderRetention(d){
     const isDepart=row.label.includes('离职');
     // Check if any 离职 value > 0
     let hasDepart=isDepart&&Object.values(row).some(v=>typeof v==='number'&&v>0);
-    h+='<tr'+(hasDepart?' style="background:#fff2f0"':'')+'><td class="lb">'+row.label+'</td>';
+    // PBU column
+    let pbuVal=null;
+    if(isTarget){let s=0;for(const c of so)s+=Number(row[c])||0;pbuVal=s||null}
+    else{let s=0;for(const c of so)for(const x of subCols(c))s+=Number(row[x])||0;pbuVal=s||null}
+    h+='<tr'+(hasDepart?' style="background:#fff2f0"':'')+'><td class="lb">'+row.label+'</td><td>'+(pbuVal?fnum(pbuVal):'-')+'</td>';
     for(const c of so){const sc=subCols(c);
       if(isTarget){
         const v=row[c];
@@ -578,7 +582,7 @@ function renderRetention(d){
   }
 
   // 留任人才数量行（合并二级部门）
-  h+='<tr style="font-weight:700;background:#f5f7fa"><td class="lb">留任人才数量</td>';
+  h+='<tr style="font-weight:700;background:#f5f7fa"><td class="lb">留任人才数量</td><td>'+fnum(Object.values(retainedBySec).reduce((a,b)=>a+b,0)||null)+'</td>';
   for(const c of so){const sc=subCols(c);
     const v=retainedBySec[c]||0;
     let cls='',display='';
