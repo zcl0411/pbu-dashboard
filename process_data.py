@@ -206,28 +206,22 @@ def parse_fill_rate(ws):
 
 
 def parse_key_position(ws):
-    """3.4 关键岗位满编率 & 核心人员胜任率 (rows 55-66)"""
-    # Headers: row 56=二级, row 57=三级
+    """3.4 关键岗位满编率 & 核心人员胜任率 (rows 55-64)"""
+    # Headers: row 56 = 二级部门
     l2_headers = {}
-    l3_headers = {}
     for col_letter in ['C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R']:
         v2 = ws[f"{col_letter}56"].value
-        v3 = ws[f"{col_letter}57"].value
         if v2: l2_headers[col_letter] = str(v2).strip()
-        if v3: l3_headers[col_letter] = str(v3).strip()
 
-    # Data rows (rows 58-64): 编制数, 在岗人数, 胜任人数, 满编率(小计/合计), 胜任率(小计/合计)
+    # Data rows (rows 57-62): 目标在岗人数, 编制数, 在岗人数, 胜任人数, 满编率, 胜任率
     data_rows = []
-    for row_num in range(58, 65):
+    for row_num in range(57, 63):
         row_label = ws[f"A{row_num}"].value
-        b_val = ws[f"B{row_num}"].value
-        if row_label is None and b_val is None:
+        if row_label is None:
             continue
-        # Handle merged A: if B has value but A is None, use last label
-        row_data = {"label": str(row_label).strip() if row_label else ""}
-        if b_val:
-            row_data["sub_label"] = str(b_val).strip()
-        for col_letter in ['C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R']:
+        row_data = {"label": str(row_label).strip()}
+        # Read secondary-level columns only (skip tertiary D,E,G,I,J)
+        for col_letter in ['C','F','H','K','L','M','N','O','P','Q','R']:
             val = ws[f"{col_letter}{row_num}"].value
             if val is not None:
                 row_data[col_letter] = float(val) if isinstance(val, (int, float)) else val
@@ -243,7 +237,7 @@ def parse_key_position(ws):
         "欧洲三区有2个核心人员不胜任，日本区、四海、销售客服部及交付运营部分别有1个核心人员不胜任，"
         "区长及BP需持续关注相关核心人员后续的工作情况；"
     )
-    return {"level2_headers": l2_headers, "level3_headers": l3_headers, "data": data_rows, "analysis": analysis}
+    return {"level2_headers": l2_headers, "data": data_rows, "analysis": analysis}
 
 
 def parse_personnel_changes(ws):
