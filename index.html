@@ -343,7 +343,7 @@ function switchTab(evt,id){
 }
 
 function tblHeaders(l3,secOnly){
-  let h1='<tr><th rowspan="2" style="width:80px">分类</th><th rowspan="2" style="width:40px">类型</th>';
+  let h1='<tr><th rowspan="2" style="width:80px">分类</th><th rowspan="2" style="width:70px">PBU</th>';
   let h2='<tr>';
   for(const c of so){
     const sc=subCols(c);
@@ -352,6 +352,20 @@ function tblHeaders(l3,secOnly){
   }
   return {h1:h1+'</tr>',h2:h2+'</tr>'};
 }
+
+function pbuSum(row,cols){
+  let s=0,has=false;
+  for(const c of so){for(const x of subCols(c)){const v=row[x];if(v!=null){s+=Number(v);has=true}}}
+  return has?s:null;
+}
+function fmtPbu(rows,row){
+  const v=pbuSum(row);if(v!=null)return fnum(v);
+  // Sum from all rows if row has no data
+  let s=0;for(const r of rows){const vv=pbuSum(r);if(vv!=null)s+=vv}
+  return s?fnum(s):'-';
+}
+function pbuCol(r,row){return '<td>'+fmtPbu(r,row)+'</td>'}
+function pbuHdr(){return '<th rowspan="2" style="width:70px">PBU</th>'}
 
 function addCmpRow(data,prevFn){
   const pd=prevFn();if(!pd)return'';
@@ -374,25 +388,23 @@ function renderEstabTable(d,prevD){
   const data=d.establishment;const l3=data.level3_headers;
   const prev=prevD?prevD.establishment:null;
   const prevRows=prev?prev.data:null;
-  let h1='<tr><th rowspan="2" style="width:80px">分类</th>';
+  let h1='<tr><th rowspan="2" style="width:80px">分类</th>'+pbuHdr();
   let h2='<tr>';
   for(const c of so){const sc=subCols(c);h1+=`<th colspan="${sc.length}" class="hdr">${dn[c]}</th>`;for(const s of sc)h2+=`<th style="font-size:10px">${l3[s]||dl[s]}</th>`}
   h1+='</tr>';h2+='</tr>';
   let r='';
   for(const row of data.data){
     if(!row.label)continue;
-    // Find matching prev row (first by label match, then by type)
     let prow=null;
     if(prevRows){for(const p of prevRows){if(p.label===row.label&&p.type===row.type){prow=p;break}}}
-    r+='<tr><td class="lb">'+row.label+'</td>';
+    r+='<tr><td class="lb">'+row.label+'</td><td>'+fmtPbu(data.data,row)+'</td>';
     for(const c of so){const sc=subCols(c);for(const s of sc){
       const v=row[s];const pv=prow?prow[s]:null;
       if(v==null){r+='<td>-</td>';continue}
-      // Compare with prev month for color
       let cls='';
       if(pv!=null&&v!==pv){
-        cls=v>pv?' style="background:#d4edda"'  // 绿色：本月 > 上月
-               :' style="background:#fff3cd"';   // 浅黄：本月 < 上月
+        cls=v>pv?' style="background:#d4edda"'
+               :' style="background:#fff3cd"';
       }
       r+=`<td${cls}>${fnum(v)}</td>`;
     }}
@@ -403,36 +415,29 @@ function renderEstabTable(d,prevD){
 
 function renderActualTable(d){
   const data=d.actual_headcount;const l3=data.level3_headers;
-  let h1='<tr><th rowspan="2" style="width:80px">分类</th>';
+  let h1='<tr><th rowspan="2" style="width:80px">分类</th>'+pbuHdr();
   let h2='<tr>';
   for(const c of so){const sc=subCols(c);h1+=`<th colspan="${sc.length}" class="hdr">${dn[c]}</th>`;for(const s of sc)h2+=`<th style="font-size:10px">${l3[s]||dl[s]}</th>`}
   h1+='</tr>';h2+='</tr>';
   let r='';
   for(const row of data.data){
     if(!row.label)continue;
-    r+='<tr><td class="lb">'+row.label+'</td>';
+    r+='<tr><td class="lb">'+row.label+'</td>'+pbuCol(data.data,row);
     for(const c of so){const sc=subCols(c);for(const s of sc)r+='<td>'+(row[s]!=null?fnum(row[s]):'-')+'</td>'}
     r+='</tr>';
   }
-  r+='<tr style="font-weight:700;background:#f5f7fa"><td class="lb">合计</td>';
-  for(const c of so){const sc=subCols(c);for(const s of sc){
-    let t=0;for(const row of data.data){if(row.label&&row[s]!=null)t+=Number(row[s])}
-    r+=`<td>${t||'-'}</td>`;
-  }}
-  r+='</tr>';
-  r+=addCmpRow(data.data,prevActual);
   return `<table class="tbl"><thead>${h1}${h2}</thead><tbody>${r}</tbody></table>`;
 }
 
 function renderFillTable(d){
   const data=d.fill_rate;const l3=data.level3_headers;
-  let h1='<tr><th rowspan="2" style="width:80px">指标</th>';
+  let h1='<tr><th rowspan="2" style="width:80px">指标</th>'+pbuHdr();
   let h2='<tr>';
   for(const c of so){const sc=subCols(c);h1+=`<th colspan="${sc.length}" class="hdr">${dn[c]}</th>`;for(const s of sc)h2+=`<th style="font-size:10px">${l3[s]||dl[s]}</th>`}
   h1+='</tr>';h2+='</tr>';
   let r='';
   for(const row of data.data){
-    r+='<tr><td class="lb">'+row.label+'</td>';
+    r+='<tr><td class="lb">'+row.label+'</td>'+pbuCol(data.data,row);
     for(const c of so){const sc=subCols(c);for(const s of sc){
       const v=row[s];
       if(v==null){r+='<td>-</td>';continue}
@@ -440,6 +445,9 @@ function renderFillTable(d){
     }}
     r+='</tr>';
   }
+  // 在招岗位数和未启动岗位数（数据待补充）
+  r+='<tr><td class="lb">在招岗位数</td><td>-</td>' + Array.from({length:ac.length},()=>'<td>-</td>').join('') + '</tr>';
+  r+='<tr><td class="lb">未启动岗位数</td><td>-</td>' + Array.from({length:ac.length},()=>'<td>-</td>').join('') + '</tr>';
   return `<table class="tbl"><thead>${h1}${h2}</thead><tbody>${r}</tbody></table>`;
 }
 
@@ -451,7 +459,7 @@ function renderCostDetail(d){
   if(!valid.length)return'';
   const l3=d.fill_rate.level3_headers;
   // 自定义表头（不含"类型"列）
-  let th1='<tr><th rowspan="2" style="width:80px">分类</th>';
+  let th1='<tr><th rowspan="2" style="width:80px">分类</th>'+pbuHdr();
   let th2='<tr>';
   for(const c of so){
     const sc=subCols(c);
@@ -459,12 +467,11 @@ function renderCostDetail(d){
     for(const s of sc)th2+=`<th style="font-size:10px">${l3[s]||dl[s]}</th>`;
   }
   th1+='</tr>'; th2+='</tr>';
-  // 表体
   let r='';
   for(const row of valid){
     let label=row.label||'';
     if(label.includes('部门')||label.includes('估维度'))continue;
-    r+='<tr><td class="lb">'+label+'</td>';
+    r+='<tr><td class="lb">'+label+'</td>'+pbuCol(valid,row);
     for(const c of so){const sc=subCols(c);for(const s of sc){
       const v=row[s];
       r+=v!=null?`<td class="${pc(v)}">${fpct(v)}</td>`:'<td>-</td>';
@@ -485,14 +492,14 @@ function renderKeyPosTable(d){
     if(row.label&&row.label.includes('目标在岗'))targetRow=row;
     if(row.label&&row.label.includes('在岗人数')&&!row.label.includes('目标'))actualRow=row;
   }
-  let h='<table class="tbl"><thead><tr><th>指标</th>';
+  let h='<table class="tbl"><thead><tr><th>指标</th><th>PBU</th>';
   for(const c of so)h+=`<th>${l2[c]||dn[c]}</th>`;
   h+='</tr></thead><tbody>';
   for(const row of data.data){
     const label=row.label||'';
     const isRate=label.includes('率');
     const isActual=row===actualRow;
-    h+='<tr><td class="lb">'+label+'</td>';
+    h+='<tr><td class="lb">'+label+'</td>'+pbuCol(data.data,row);
     for(const c of so){
       const v=row[c];
       if(v==null){h+='<td>-</td>';continue}
