@@ -481,11 +481,18 @@ function renderCostDetail(d){
 
 function renderKeyPosTable(d){
   const data=d.key_position;const l2=data.level2_headers||{};
-  // Find target and actual rows for comparison
   let targetRow=null, actualRow=null;
   for(const row of data.data){
     if(row.label&&row.label.includes('目标在岗'))targetRow=row;
     if(row.label&&row.label.includes('在岗人数')&&!row.label.includes('目标'))actualRow=row;
+  }
+  // Check if any dept is under target
+  let hasGap=false;
+  if(actualRow&&targetRow){
+    for(const c of so){
+      const av=actualRow[c], tv=targetRow[c];
+      if(av!=null&&tv!=null&&av<tv){hasGap=true;break}
+    }
   }
   let h='<table class="tbl"><thead><tr><th>指标</th>';
   for(const c of so)h+=`<th>${l2[c]||dn[c]}</th>`;
@@ -494,7 +501,8 @@ function renderKeyPosTable(d){
     const label=row.label||'';
     const isRate=label.includes('率');
     const isActual=row===actualRow;
-    h+='<tr><td class="lb">'+label+'</td>';
+    const rowStyle=isActual&&hasGap?' style="background:#fff2f0"':'';
+    h+='<tr'+rowStyle+'><td class="lb">'+label+'</td>';
     for(const c of so){
       const v=row[c];
       if(v==null){h+='<td>-</td>';continue}
