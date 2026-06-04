@@ -467,11 +467,25 @@ function renderCostDetail(d){
     for(const s of sc)th2+=`<th style="font-size:10px">${l3[s]||dl[s]}</th>`;
   }
   th1+='</tr>'; th2+='</tr>';
+  // Helper: find matching row by label
+  function findRow(label,data){
+    for(const row of data){if(row.label===label)return row}
+    return null;
+  }
+  // Compute PBU rate for a cost type: sum(在职)/sum(编制)
+  function costPbu(label){
+    const er=findRow(label,d.establishment.data);
+    const hr=findRow(label,d.actual_headcount.data);
+    if(!er||!hr)return null;
+    const e=pbuSum(er), h=pbuSum(hr);
+    return (h!=null&&e!=null&&e>0)?h/e:null;
+  }
   let r='';
   for(const row of valid){
     let label=row.label||'';
     if(label.includes('部门')||label.includes('估维度'))continue;
-    r+='<tr><td class="lb">'+label+'</td>'+pbuCol(valid,row);
+    const pbuV=costPbu(label);
+    r+='<tr><td class="lb">'+label+'</td><td>'+(pbuV!=null?fpct(pbuV):'-')+'</td>';
     for(const c of so){const sc=subCols(c);for(const s of sc){
       const v=row[s];
       r+=v!=null?`<td class="${pc(v)}">${fpct(v)}</td>`:'<td>-</td>';
