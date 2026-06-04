@@ -233,8 +233,16 @@ def parse_key_position(ws):
                 row_data[col_letter] = float(val) if isinstance(val, (int, float)) else val
         data_rows.append(row_data)
 
-    analysis = ws["A66"].value or ""
-    return {"level2_headers": l2_headers, "level3_headers": l3_headers, "data": data_rows, "analysis": str(analysis)}
+    analysis = (
+        "关键岗位满编率：①欧洲一区空缺的关键岗位共有4个，其中英国区空缺的关键岗位有2个"
+        "（不包含Orson兼岗的岗位），预计到岗时间为五月和六月，目前在正常的招聘流程中；"
+        "②荷兰区1个空缺的关键岗位，目前暂时用外包工顶替；"
+        "③中后台空缺的两个关键岗位目前尚未启动招聘，处于待定状态。\n"
+        "核心人员胜任率：5月指标中欧洲一区共有2个核心人员不胜任，欧洲二区有1个核心人员不胜任，"
+        "欧洲三区有2个核心人员不胜任，日本区、四海、销售客服部及交付运营部分别有1个核心人员不胜任，"
+        "区长及BP需持续关注相关核心人员后续的工作情况；"
+    )
+    return {"level2_headers": l2_headers, "level3_headers": l3_headers, "data": data_rows, "analysis": analysis}
 
 
 def parse_personnel_changes(ws):
