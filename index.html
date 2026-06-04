@@ -637,7 +637,7 @@ function initCharts(d){
       for(const row of d.retention.data){if(row.label&&row.label.includes('在职')){for(const s of subCols(x))ret+=Number(row[s])||0;break}}
       retained.push(ret);
     }
-    c.setOption({title:{text:'优秀人才保留数量',left:'center',textStyle:{fontSize:13}},tooltip:{trigger:'axis'},legend:{data:['目标留任','实际留任'],bottom:0},xAxis:{type:'category',data:so.map(x=>dn[x]),axisLabel:{rotate:30,fontSize:10,interval:0,align:'center'}},yAxis:{type:'value'},grid:{bottom:80},series:[
+    c.setOption({title:{text:'优秀人才保留数量',left:'center',textStyle:{fontSize:13}},tooltip:{trigger:'axis'},legend:{data:['目标留任','实际留任'],bottom:0},xAxis:{type:'category',data:so.map(x=>dn[x]),axisLabel:{rotate:35,fontSize:9,interval:0}},yAxis:{type:'value'},grid:{bottom:100},series:[
       {name:'目标留任',type:'bar',data:targets,color:'#b0c4de',itemStyle:{color:'#b0c4de'},barGap:'10%',label:{show:true,position:'top'}},
       {name:'实际留任',type:'bar',data:retained,color:'#1890ff',itemStyle:{color:function(p){return p.value>=targets[p.dataIndex]?'#1890ff':'#f59e0b'}},label:{show:true,position:'top'}}
     ]});
@@ -648,7 +648,7 @@ function initFillRateChart(d){
   const fe=document.getElementById('chart_fillrate');if(!fe)return;
   const c=echarts.init(fe);const fr=[];
   for(const row of d.fill_rate.data){if(row.label&&row.label.includes('满编率')){for(const x of ac)fr.push(row[x]!=null?Number((row[x]*100).toFixed(1)):0);break}}
-  c.setOption({title:{text:'各部门满编率',left:'center',textStyle:{fontSize:13}},tooltip:{trigger:'axis',formatter:p=>p[0].name+'<br/>满编率: <b>'+p[0].value+'%</b>'},xAxis:{type:'category',data:ac.map(x=>dl[x]),axisLabel:{rotate:30,fontSize:10,interval:0,align:'center'}},yAxis:{type:'value',max:100,axisLabel:{formatter:'{value}%'}},grid:{bottom:80},series:[{type:'bar',data:fr,itemStyle:{color:function(p){return p.value>=80?'#1890ff':'#f59e0b'}},label:{show:true,position:'top',formatter:'{c}%'}}]});
+  c.setOption({title:{text:'各部门满编率',left:'center',textStyle:{fontSize:13}},tooltip:{trigger:'axis',formatter:p=>p[0].name+'<br/>满编率: <b>'+p[0].value+'%</b>'},xAxis:{type:'category',data:ac.map(x=>dl[x]),axisLabel:{rotate:35,fontSize:9,interval:0}},yAxis:{type:'value',max:100,axisLabel:{formatter:'{value}%'}},grid:{bottom:100},series:[{type:'bar',data:fr,itemStyle:{color:function(p){return p.value>=80?'#1890ff':'#f59e0b'}},label:{show:true,position:'top',formatter:'{c}%'}}]});
 }
 function initKeyFillChart(d){
   const kfe=document.getElementById('chart_key_fill');if(!kfe)return;
@@ -660,7 +660,7 @@ function initKeyFillChart(d){
       if(totalIdx===1){for(const x of so)kr.push(row[x]!=null?Number((row[x]*100).toFixed(1)):0);break}
     }
   }
-  c.setOption({title:{text:'关键岗位满编率',left:'center',textStyle:{fontSize:13}},tooltip:{trigger:'axis'},xAxis:{type:'category',data:so.map(x=>dn[x]),axisLabel:{rotate:30,fontSize:10,interval:0,align:'center'}},yAxis:{type:'value',max:100,axisLabel:{formatter:'{value}%'}},grid:{bottom:80},series:[{type:'bar',data:kr,itemStyle:{color:function(p){return p.value>=80?'#1890ff':'#f59e0b'}},label:{show:true,position:'top',formatter:'{c}%'}}]});
+  c.setOption({title:{text:'关键岗位满编率',left:'center',textStyle:{fontSize:13}},tooltip:{trigger:'axis'},xAxis:{type:'category',data:so.map(x=>dn[x]),axisLabel:{rotate:35,fontSize:9,interval:0}},yAxis:{type:'value',max:100,axisLabel:{formatter:'{value}%'}},grid:{bottom:100},series:[{type:'bar',data:kr,itemStyle:{color:function(p){return p.value>=80?'#1890ff':'#f59e0b'}},label:{show:true,position:'top',formatter:'{c}%'}}]});
 }
 function initKeyCompChart(d){
   const kce=document.getElementById('chart_key_comp');if(!kce)return;
@@ -671,7 +671,7 @@ function initKeyCompChart(d){
       if(totalIdx===2){for(const x of so)cr.push(row[x]!=null?Number((row[x]*100).toFixed(1)):0);break}
     }
   }
-  c.setOption({title:{text:'核心人员胜任率',left:'center',textStyle:{fontSize:13}},tooltip:{trigger:'axis'},xAxis:{type:'category',data:so.map(x=>dn[x]),axisLabel:{rotate:30,fontSize:10,interval:0,align:'center'}},yAxis:{type:'value',max:100,axisLabel:{formatter:'{value}%'}},grid:{bottom:80},series:[{type:'bar',data:cr,itemStyle:{color:function(p){return p.value>=80?'#1890ff':'#f59e0b'}},label:{show:true,position:'top',formatter:'{c}%'}}]});
+  c.setOption({title:{text:'核心人员胜任率',left:'center',textStyle:{fontSize:13}},tooltip:{trigger:'axis'},xAxis:{type:'category',data:so.map(x=>dn[x]),axisLabel:{rotate:35,fontSize:9,interval:0}},yAxis:{type:'value',max:100,axisLabel:{formatter:'{value}%'}},grid:{bottom:100},series:[{type:'bar',data:cr,itemStyle:{color:function(p){return p.value>=80?'#1890ff':'#f59e0b'}},label:{show:true,position:'top',formatter:'{c}%'}}]});
 }
 
 window.addEventListener('resize',()=>{document.querySelectorAll('.chart-box').forEach(el=>{const i=echarts.getInstanceByDom(el);if(i)i.resize()})});
