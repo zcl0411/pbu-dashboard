@@ -486,14 +486,6 @@ function renderKeyPosTable(d){
     if(row.label&&row.label.includes('目标在岗'))targetRow=row;
     if(row.label&&row.label.includes('在岗人数')&&!row.label.includes('目标'))actualRow=row;
   }
-  // Check if any dept is under target
-  let hasGap=false;
-  if(actualRow&&targetRow){
-    for(const c of so){
-      const av=actualRow[c], tv=targetRow[c];
-      if(av!=null&&tv!=null&&av<tv){hasGap=true;break}
-    }
-  }
   let h='<table class="tbl"><thead><tr><th>指标</th>';
   for(const c of so)h+=`<th>${l2[c]||dn[c]}</th>`;
   h+='</tr></thead><tbody>';
@@ -501,15 +493,14 @@ function renderKeyPosTable(d){
     const label=row.label||'';
     const isRate=label.includes('率');
     const isActual=row===actualRow;
-    const rowStyle=isActual&&hasGap?' style="background:#fff2f0"':'';
-    h+='<tr'+rowStyle+'><td class="lb">'+label+'</td>';
+    h+='<tr><td class="lb">'+label+'</td>';
     for(const c of so){
       const v=row[c];
       if(v==null){h+='<td>-</td>';continue}
       if(isRate){h+=`<td class="${pc(v)}">${fpct(v)}</td>`}
       else if(isActual&&targetRow){
         const tgt=targetRow[c];
-        const cls=(tgt!=null&&v<tgt)?' style="font-weight:700;color:#ef4444"':'';
+        const cls=(tgt!=null&&v<tgt)?' style="font-weight:700;color:#ef4444;background:#fff2f0"':'';
         h+=`<td${cls}>${fnum(v)}</td>`;
       }else{h+=`<td>${fnum(v)}</td>`}
     }
