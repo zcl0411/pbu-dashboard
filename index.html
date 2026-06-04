@@ -487,10 +487,22 @@ function renderCostDetail(d){
 
 function renderKeyPosTable(d){
   const data=d.key_position;const l2=data.level2_headers||{};
-  let targetRow=null, actualRow=null;
+  let targetRow=null, actualRow=null, estabRow=null, compRow=null;
   for(const row of data.data){
     if(row.label&&row.label.includes('目标在岗'))targetRow=row;
     if(row.label&&row.label.includes('在岗人数')&&!row.label.includes('目标'))actualRow=row;
+    if(row.label&&row.label.includes('编制数'))estabRow=row;
+    if(row.label&&row.label.includes('胜任人数'))compRow=row;
+  }
+  // Compute PBU rates
+  let pbuFillRate=null, pbuCompRate=null;
+  if(actualRow&&estabRow){
+    const a=pbuSum(actualRow), e=pbuSum(estabRow);
+    pbuFillRate=(a!=null&&e!=null&&e>0)?a/e:null;
+  }
+  if(compRow&&actualRow){
+    const c=pbuSum(compRow), a=pbuSum(actualRow);
+    pbuCompRate=(c!=null&&a!=null&&a>0)?c/a:null;
   }
   let h='<table class="tbl"><thead><tr><th>指标</th><th>PBU</th>';
   for(const c of so)h+=`<th>${l2[c]||dn[c]}</th>`;
@@ -499,8 +511,11 @@ function renderKeyPosTable(d){
     const label=row.label||'';
     const isRate=label.includes('率');
     const isActual=row===actualRow;
-    const pbuV=pbuSum(row);
-    h+='<tr><td class="lb">'+label+'</td><td>'+(pbuV!=null?(isRate?fpct(pbuV):fnum(pbuV)):'-')+'</td>';
+    let pbuVal;
+    if(label.includes('满编率'))pbuVal=pbuFillRate;
+    else if(label.includes('胜任率'))pbuVal=pbuCompRate;
+    else pbuVal=pbuSum(row);
+    h+='<tr><td class="lb">'+label+'</td><td>'+(pbuVal!=null?(isRate?fpct(pbuVal):fnum(pbuVal)):'-')+'</td>';
     for(const c of so){
       const v=row[c];
       if(v==null){h+='<td>-</td>';continue}
@@ -606,6 +621,7 @@ function renderRetention(d){
   h+='</tr>';
 
   h+='</tbody></table>';
+  h+='<p style="font-size:11px;color:#888;margin:8px 0 0">④"优秀人才"指人才盘点123格子+集团及BU年度评优+破格晋升人员</p>';
   h+='<div class="chart-box chart-full" id="chart_retention" style="height:380px;margin-top:12px"></div>';
   if(data.analysis)h+=`<div class="ana">▶ ${data.analysis}</div>`;
   return h;
