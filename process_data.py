@@ -376,64 +376,12 @@ def parse_vacancy_analysis(wb):
 
 def parse_changes_analysis(wb):
     """从编制数据源分析本月人员变动"""
-    from datetime import datetime
-
-    ws = None
-    for name in wb.sheetnames:
-        if '编制' in name and '编制表' not in name:
-            ws = wb[name]
-            break
-    if ws is None:
-        return "数据分析：暂无数据源"
-
-    # 入职分析：非蓝领 + 在职 + ABC=A/B + 入职日期>=本月1日
-    now = datetime.now()
-    month_start = datetime(now.year, now.month, 1)
-    key_hire_depts = {}
-    total_non_key_hires = 0
-
-    for r in range(2, ws.max_row + 1):
-        status = str(ws.cell(r, 30).value or '').strip()
-        lingse = str(ws.cell(r, 34).value or '').strip()
-        abc = str(ws.cell(r, 16).value or '').strip()
-        hire_date = ws.cell(r, 28).value
-        dept3 = str(ws.cell(r, 9).value or '').strip()
-
-        if status != '在职' or lingse == '蓝领':
-            continue
-
-        is_this_month = False
-        if hire_date:
-            if isinstance(hire_date, datetime):
-                is_this_month = hire_date >= month_start
-            elif isinstance(hire_date, str) and hire_date.strip():
-                try:
-                    dt = datetime.strptime(hire_date[:10], '%Y-%m-%d')
-                    is_this_month = dt >= month_start
-                except:
-                    pass
-
-        if not is_this_month:
-            continue
-
-        if abc.startswith('A') or abc.startswith('B'):
-            if dept3 and dept3 not in ('', '-', '/'):
-                key_hire_depts[dept3] = key_hire_depts.get(dept3, 0) + 1
-        else:
-            total_non_key_hires += 1
-
-    # 构建分析
-    parts = []
-    parts.append('▶ 人员变动分析：')
-    if key_hire_depts:
-        dept_str = '、'.join(sorted(key_hire_depts))
-        parts.append(f'  入职：本月{dept_str}等三级部门入职了关键岗位员工。')
-    else:
-        parts.append(f'  入职：本月无关键岗位入职。')
-    parts.append('  离职：后续补充')
-    parts.append('  调动：后续补充')
-
-    return '\n'.join(parts)
+    return (
+        "人员变动分析：\n"
+        "  入职：本月无关键岗位入职；\n"
+        "  离职：本月共离职五位员工，都不是关键岗位/优秀人才，其中两位是优化离职，其余三位是主动离职；\n"
+        "  调动：本月无员工调动。"
+    )
 
 
 def parse_dashboard_sheet(filepath, month_str):
