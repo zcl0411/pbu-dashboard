@@ -480,39 +480,36 @@ function renderCostDetail(d){
 }
 
 function renderKeyPosTable(d){
-  const data=d.key_position;const l3=data.level3_headers,l2=data.level2_headers;
-  let h='<table class="tbl"><thead><tr><th rowspan="2">指标</th>';
-  for(const c of so){const sc=subCols(c);h+=`<th colspan="${sc.length}" class="hdr">${l2[c]||dn[c]}</th>`}
-  h+='</tr><tr>';
-  for(const c of so){const sc=subCols(c);for(const s of sc)h+=`<th style="font-size:10px">${l3[s]||dl[s]}</th>`}
+  const data=d.key_position;const l2=data.level2_headers;
+  // Only secondary departments in header
+  let h='<table class="tbl"><thead><tr><th>指标</th>';
+  for(const c of so)h+=`<th>${l2[c]||dn[c]}</th>`;
   h+='</tr></thead><tbody>';
-  // Track 合计 index for 满编率 and 胜任率
   let totalCount=0;
   for(const row of data.data){
-    let label=row.label;
     const sub=row.sub_label||'';
+    // Skip 小计 rows
+    if(sub==='小计')continue;
     const isTotal=sub==='合计';
+    let label=row.label;
     if(isTotal){
       totalCount++;
-      // First 合计 → 关键岗位满编率, second 合计 → 核心人员胜任率
-      label=totalCount===1?'关键岗位满编率（合计）':'核心人员胜任率（合计）';
-    }else if(sub){
-      label+=' ('+sub+')';
+      label=totalCount===1?'关键岗位满编率':'核心人员胜任率';
     }
-    if(!label&&!isTotal)label=sub;
     h+='<tr'+(isTotal?' style="font-weight:700;background:#f5f7fa"':'')+'><td class="lb">'+label+'</td>';
-    for(const c of so){const sc=subCols(c);
+    for(const c of so){
       if(isTotal){
-        // 合计行：二级部门维度，合并子列
+        // 合计行：二级部门数据
         const v=row[c];
-        h+=v!=null?`<td colspan="${sc.length}" class="${pc(v)}">${fpct(v)}</td>`:`<td colspan="${sc.length}">-</td>`;
+        h+=v!=null?`<td class="${pc(v)}">${fpct(v)}</td>`:'<td>-</td>';
       }else{
-        // 小计行：不进行颜色标注，仅显示百分比数值
-        for(const s of sc){
+        // 编制数/在岗人数/胜任人数：聚合三级部门数据到二级
+        let sum=0,has=false;
+        for(const s of subCols(c)){
           const v=row[s];
-          if(v==null){h+='<td>-</td>';continue}
-          h+=(label||'').includes('率')?`<td>${fpct(v)}</td>`:`<td>${fnum(v)}</td>`;
+          if(v!=null){sum+=Number(v);has=true}
         }
+        h+=has?`<td>${fnum(sum)}</td>`:'<td>-</td>';
       }
     }
     h+='</tr>';
@@ -562,15 +559,19 @@ function renderRetention(d){
   for(const row of data.data){
     if(row.label.includes('保留率'))continue;
     const isTarget=row.label.includes('目标');
-    h+='<tr><td class="lb">'+row.label+'</td>';
+    const isDepart=row.label.includes('离职');
+    // Check if any 离职 value > 0
+    let hasDepart=isDepart&&Object.values(row).some(v=>typeof v==='number'&&v>0);
+    h+='<tr'+(hasDepart?' style="background:#fff2f0"':'')+'><td class="lb">'+row.label+'</td>';
     for(const c of so){const sc=subCols(c);
       if(isTarget){
         const v=row[c];
         h+=v!=null?`<td colspan="${sc.length}">${fnum(v)}</td>`:`<td colspan="${sc.length}">-</td>`;
       }else{
-        // 在职/离职：展开到三级，同时累加在职人数
         for(const s of sc){
-          const v=row[s];h+='<td>'+(v!=null?fnum(v):'-')+'</td>';
+          const v=row[s];
+          const cls=(hasDepart&&v>0)?' style="font-weight:700;color:#ef4444"':'';
+          h+='<td'+cls+'>'+(v!=null?fnum(v):'-')+'</td>';
           if(row.label.includes('在职'))retainedBySec[c]=(retainedBySec[c]||0)+(Number(row[s])||0);
         }
       }
