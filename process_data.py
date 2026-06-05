@@ -418,15 +418,17 @@ def parse_changes_analysis(wb, personnel_changes):
                         depart_positions.append(pos)
             break
 
-    hire_str = '、'.join(hire_positions) if hire_positions else ''
-    depart_str = '、'.join(depart_positions) if depart_positions else ''
+    hire_positions_str = '、'.join(hire_positions)
+    depart_positions_str = '、'.join(depart_positions)
+    hire_str = '，分别是' + hire_positions_str if hire_positions_str else ''
+    depart_str = '，分别有' + depart_positions_str if depart_positions_str else ''
 
     parts = ['人员变动分析：']
     if key_hires > 0:
-        parts.append(f'  入职：本月共入职{total_hires}位员工，分别是{hire_str}，其中有{key_hires}位关键岗位员工入职；')
+        parts.append(f'  入职：本月共入职{total_hires}位员工，{hire_str}，其中有{key_hires}位关键岗位员工入职；')
     else:
-        parts.append(f'  入职：本月共入职{total_hires}位员工，分别是{hire_str}，无关键岗位入职；')
-    parts.append(f'  离职：本月共离职五位员工，分别有{depart_str}，都不是关键岗位/优秀人才，其中两位是优化离职，其余三位是主动离职；')
+        parts.append(f'  入职：本月共入职{total_hires}位员工，{hire_str}，无关键岗位入职；')
+    parts.append(f'  离职：本月共离职五位员工，{depart_str}，都不是关键岗位/优秀人才，其中两位是优化离职，其余三位是主动离职；')
     parts.append('  调动：本月无员工调动。')
     return '\n'.join(parts)
 
