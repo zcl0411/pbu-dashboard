@@ -436,8 +436,18 @@ function renderFillTable(d){
   for(const c of so){const sc=subCols(c);h1+=`<th colspan="${sc.length}" class="hdr">${dn[c]}</th>`;for(const s of sc)h2+=`<th style="font-size:10px">${l3[s]||dl[s]}</th>`}
   h1+='</tr>';h2+='</tr>';
   let r='';
+  // 找到编制数和在职数行，用于计算PBU满编率
+  const estabRow=data.data.find(r=>r.label&&r.label.includes('编制数'));
+  const headcountRow=data.data.find(r=>r.label&&r.label.includes('在职数'));
+  const pbuRate=(estabRow&&headcountRow)?pbuSum(headcountRow)/pbuSum(estabRow):null;
   for(const row of data.data){
-    r+='<tr><td class="lb">'+row.label+'</td>'+pbuCol(data.data,row);
+    let pbuCell;
+    if(row.label&&row.label.includes('满编率')){
+      pbuCell='<td class="'+pc(pbuRate)+'">'+fpct(pbuRate)+'</td>';
+    }else{
+      pbuCell=pbuCol(data.data,row);
+    }
+    r+='<tr><td class="lb">'+row.label+'</td>'+pbuCell;
     for(const c of so){const sc=subCols(c);for(const s of sc){
       const v=row[s];
       if(v==null){r+='<td>-</td>';continue}
