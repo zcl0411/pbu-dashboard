@@ -271,35 +271,83 @@ def parse_key_position(ws, wb):
 
 
 def parse_personnel_changes(ws):
-    """四、各部门月度人员变动展示 (rows 67-73)"""
+    """四、各部门月度人员变动展示 - 通过标签搜索而非固定行号"""
     result = {}
-    for row_num in range(70, 73):
+    analysis = ""
+    # Search rows 65-80 for 入职/离职/调动 labels
+    found_section = False
+    valid_labels = {'入职', '离职', '调动'}
+    for row_num in range(65, 85):
         label = ws[f"A{row_num}"].value
         if label is None:
             continue
         key = str(label).strip()
-        vals = {}
-        for col_letter in ['C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R']:
-            val = ws[f"{col_letter}{row_num}"].value
-            if val is not None:
-                vals[col_letter] = int(val) if isinstance(val, (int, float)) else val
-        result[key] = vals
+        # Detect section start
+        if '四、' in key or '人员变动' in key:
+            found_section = True
+            continue
+        if not found_section:
+            continue
+        # Check if this is an analysis row (contains "数据分析" or starts with "五、")
+        if '数据分析' in key or key.startswith('五、') or key.startswith('六、'):
+            if '数据分析' in key:
+                analysis = key
+            break
+        if key in valid_labels:
+            vals = {}
+            for col_letter in ['C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R']:
+                val = ws[f"{col_letter}{row_num}"].value
+                if val is not None:
+                    vals[col_letter] = int(val) if isinstance(val, (int, float)) else val
+            result[key] = vals
 
-    analysis = ws["A73"].value or ""
+    if not analysis:
+        analysis = ws["A73"].value or ""
     return result, str(analysis)
 
 
 def parse_retention(ws):
-    """五、优秀人才保留率 (rows 74-83)"""
+    """五、优秀人才保留率 - 通过标签搜索而非固定行号"""
     data_rows = []
     last_label = None
-    for row_num in range(77, 82):
+    found_section = False
+    valid_first_labels = {'目标留任人才数量', '在职', '离职', '保留率'}
+    for row_num in range(73, 90):
         row_label = ws[f"A{row_num}"].value
         b_val = ws[f"B{row_num}"].value
+
+        # Detect section start
+        key_a = str(row_label).strip() if row_label else ''
+        if '五、' in key_a or '优秀人才保留' in key_a or '二级部门' in key_a:
+            found_section = True
+            continue
+        if '三级部门' in key_a and found_section:
+            continue
+
+        # If we see a known retention label, auto-start the section
+        if key_a in valid_first_labels:
+            found_section = True
+
+        if not found_section:
+            continue
+
+        # Stop at next section or analysis
+        if '六、' in key_a or '改善建议' in key_a:
+            break
+
+        # Skip analysis rows
+        if '数据分析' in key_a:
+            continue
+
         # Handle merged cells: if A is None but B has value, use last A label
-        label = str(row_label).strip() if row_label else (last_label if b_val else None)
+        label = key_a if row_label else (last_label if b_val else None)
         if label is None and b_val is None:
             continue
+
+        # Check if this is a data row (has valid first-column label or sub_label)
+        if label and label not in valid_first_labels and '保留率' not in label:
+            continue
+
         last_label = label
         row_data = {"label": label or ""}
         if b_val:
@@ -315,19 +363,33 @@ def parse_retention(ws):
 
 
 def parse_improvements(ws):
-    """六、改善建议与措施 (rows 84-94)"""
+    """六、改善建议与措施 - 通过标签搜索而非固定行号"""
     # 四月例行项目
     april_data = {}
-    for row_num in range(87, 93):
+    found_section = False
+    for row_num in range(84, 100):
         label = ws[f"A{row_num}"].value
         if label is None:
+            continue
+        key = str(label).strip()
+        if '六、' in key or '改善建议' in key:
+            found_section = True
+            continue
+        if not found_section:
+            continue
+        # Stop if we hit something that's clearly not a data row
+        if '分析' in key and '数据' in key:
+            break
+        # Only process rows that look like department names or improvement items
+        if len(key) < 3:
             continue
         vals = {}
         for col_letter in ['C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R']:
             val = ws[f"{col_letter}{row_num}"].value
             if val is not None:
                 vals[col_letter] = str(val).strip()
-        april_data[str(label).strip()] = vals
+        if vals:  # Only add if there's actual data
+            april_data[key] = vals
 
     return {"四月": april_data}
 
