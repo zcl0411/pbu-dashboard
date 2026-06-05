@@ -381,37 +381,50 @@ def parse_vacancy_analysis(wb):
 def parse_changes_analysis(wb, personnel_changes):
     """从数据源分析本月人员变动"""
     from datetime import datetime
-    now = datetime.now()
-    month_start = datetime(now.year, now.month, 1)
+    month_start = datetime(2026, 5, 1)
 
-    # 入职总数 = PBU汇总（所有部门入职合计）
+    # 入职总数 = PBU汇总
     total_hires = 0
     if personnel_changes and '入职' in personnel_changes:
         hire_data = personnel_changes['入职']
         for col in ['C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R']:
             total_hires += int(hire_data.get(col, 0) or 0)
 
-    # 关键岗位入职 = 花名册中当月入职且S列(C19)为"是"
+    # 从花名册提取入职/离职职位
+    hire_positions = []
+    depart_positions = []
     key_hires = 0
     for name in wb.sheetnames:
         if '花名册' in name or '名单' in name:
             ws = wb[name]
             for r in range(2, ws.max_row + 1):
                 hire_date = ws.cell(r, 4).value
+                leave_date = ws.cell(r, 6).value
                 status = str(ws.cell(r, 5).value or '').strip()
+                lingse = str(ws.cell(r, 17).value or '').strip()
+                pos = str(ws.cell(r, 13).value or '').strip()
                 is_key = str(ws.cell(r, 19).value or '').strip()
-                if hire_date and isinstance(hire_date, datetime) and hire_date >= month_start:
-                    if status not in ('离职', '待离职'):
-                        if is_key == '是':
-                            key_hires += 1
+                if lingse == '蓝领':
+                    continue
+                if hire_date and isinstance(hire_date, datetime) and hire_date >= month_start and status not in ('离职', '待离职'):
+                    if pos and pos not in hire_positions:
+                        hire_positions.append(pos)
+                    if is_key == '是':
+                        key_hires += 1
+                if leave_date and isinstance(leave_date, datetime) and leave_date >= month_start and status == '离职':
+                    if pos and pos not in depart_positions:
+                        depart_positions.append(pos)
             break
+
+    hire_str = '、'.join(hire_positions) if hire_positions else ''
+    depart_str = '、'.join(depart_positions) if depart_positions else ''
 
     parts = ['人员变动分析：']
     if key_hires > 0:
-        parts.append(f'  入职：本月共入职{total_hires}位员工，其中有{key_hires}位关键岗位员工入职；')
+        parts.append(f'  入职：本月共入职{total_hires}位员工，分别是{hire_str}，其中有{key_hires}位关键岗位员工入职；')
     else:
-        parts.append(f'  入职：本月共入职{total_hires}位员工，无关键岗位入职；')
-    parts.append('  离职：本月共离职五位员工，都不是关键岗位/优秀人才，其中两位是优化离职，其余三位是主动离职；')
+        parts.append(f'  入职：本月共入职{total_hires}位员工，分别是{hire_str}，无关键岗位入职；')
+    parts.append(f'  离职：本月共离职五位员工，分别有{depart_str}，都不是关键岗位/优秀人才，其中两位是优化离职，其余三位是主动离职；')
     parts.append('  调动：本月无员工调动。')
     return '\n'.join(parts)
 
