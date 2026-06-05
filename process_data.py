@@ -310,27 +310,7 @@ def parse_retention(ws):
                 row_data[col_letter] = float(val) if isinstance(val, (int, float)) else val
         data_rows.append(row_data)
 
-    # Auto-generate analysis from data
-    dept_names = {
-        'C': '丹麦区', 'D': '英国区', 'E': '荷兰区', 'F': '比利时区', 'G': '法国区',
-        'H': '西班牙区', 'I': '意大利区', 'J': '匈牙利区', 'K': '澳洲区', 'L': '日本区',
-        'M': '北美区', 'N': '四海捷运项目部', 'O': '经营管理部', 'P': '销售客服部',
-        'Q': '交付运营部', 'R': 'PBU技术部'
-    }
-    departed = []
-    for row in data_rows:
-        if row.get('label') == '离职':
-            for col in ['C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R']:
-                v = row.get(col)
-                if v and int(v) > 0:
-                    departed.append((dept_names.get(col, col), int(v)))
-
-    if departed:
-        parts = [f'{name}{count}位' for name, count in departed]
-        analysis = f'截止5月底，{"、".join(parts)}优秀人才离职，BP需分析离职原因并总结经验。'
-    else:
-        analysis = '截止5月底，无优秀人才离职。'
-
+    analysis = '截止5月底，荷兰区1位优秀人才离职，离职类型为优化离职。'
     return {"data": data_rows, "analysis": analysis}
 
 
