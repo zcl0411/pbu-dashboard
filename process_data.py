@@ -205,7 +205,7 @@ def parse_fill_rate(ws):
     }
 
 
-def parse_key_position(ws):
+def parse_key_position(ws, wb):
     """3.4 关键岗位满编率 & 核心人员胜任率 (rows 55-64)"""
     # Headers: row 56 = 二级部门
     l2_headers = {}
@@ -220,18 +220,43 @@ def parse_key_position(ws):
         if row_label is None:
             continue
         row_data = {"label": str(row_label).strip()}
-        # Read secondary-level columns only (skip tertiary D,E,G,I,J)
         for col_letter in ['C','F','H','K','L','M','N','O','P','Q','R']:
             val = ws[f"{col_letter}{row_num}"].value
             if val is not None:
                 row_data[col_letter] = float(val) if isinstance(val, (int, float)) else val
         data_rows.append(row_data)
 
+    # Dynamic: extract 英国区 vacant key position names from 编制 sheet
+    uk_positions = []
+    middle_positions = []
+    europe_depts = ('欧洲一区', '欧洲二区', '欧洲三区', '丹麦区', '英国区', '荷兰区', '比利时区', '法国区', '西班牙区', '意大利区', '匈牙利区')
+    for name in wb.sheetnames:
+        if '编制' in name and '编制表' not in name:
+            ws_bz = wb[name]
+            for r in range(2, ws_bz.max_row + 1):
+                status = str(ws_bz.cell(r, 30).value or '').strip()
+                lingse = str(ws_bz.cell(r, 34).value or '').strip()
+                abc = str(ws_bz.cell(r, 16).value or '').strip()
+                dept2 = str(ws_bz.cell(r, 8).value or '').strip()
+                pos = str(ws_bz.cell(r, 14).value or '').strip()  # C14=职位名称
+                if status != '空编' or lingse == '蓝领':
+                    continue
+                if not (abc.startswith('A') or abc.startswith('B')):
+                    continue
+                if '英国区' in dept2:
+                    uk_positions.append(pos)
+                elif not any(d in dept2 for d in europe_depts) and dept2 not in ('-', ''):
+                    middle_positions.append(pos)
+            break
+
+    uk_str = '、'.join(uk_positions) if uk_positions else '关键岗位'
+    mid_str = '、'.join(middle_positions) if middle_positions else '高级商务主管、精益经理'
+
     analysis = (
         "数据分析：\n"
-        "1.关键岗位满编率：①欧洲一区空缺的关键岗位共有4个，其中英国区空缺的关键岗位有2个，"
-        "分别是销售经理、精益经理，预计到岗时间为五月和六月，目前在正常的招聘流程中；"
-        "②中后台空缺的两个关键岗位分别是高级商务主管、精益经理，目前尚未启动招聘，处于待定状态。\n"
+        f"1.关键岗位满编率：①欧洲一区空缺的关键岗位共有4个，其中英国区空缺的关键岗位有2个，"
+        f"分别是{uk_str}，预计到岗时间为五月和六月，目前在正常的招聘流程中；"
+        f"②中后台空缺的两个关键岗位分别是{mid_str}，目前尚未启动招聘，处于待定状态。\n"
         "2.核心人员胜任率：5月指标中欧洲一区共有2个核心人员不胜任，"
         "欧洲三区有1个核心人员不胜任，"
         "日本区有一个核心人员不胜任，目前就是跟催和监督他的申请情况，观察工作状态；"
@@ -427,7 +452,7 @@ def parse_dashboard_sheet(filepath, month_str):
     establishment = parse_establishment(ws)
     actual_headcount = parse_headcount_actual(ws)
     fill_rate = parse_fill_rate(ws)
-    key_position = parse_key_position(ws)
+    key_position = parse_key_position(ws, wb)
     changes, changes_analysis = parse_personnel_changes(ws)
     retention = parse_retention(ws)
     improvements = parse_improvements(ws)
