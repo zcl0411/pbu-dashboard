@@ -279,8 +279,8 @@ function renderDensity(d){
   let h='';
   // 取数口径
   h+=`<div class="subsec"><div class="subsec-title">取数口径</div>
-    <p style="font-size:12px;color:#888;line-height:1.8">编制及在岗人数均不含实习生、外包、蓝领；<br>
-    ①"关键岗位"指承载关键组织职责和目标的岗位(所有AB类)；②"核心人员"指关键岗位在岗人员；③"核心人员胜任"指关键岗位在岗人员年度人才盘点在1235格子；④"优秀人才"指人才盘点123格子+集团及BU年度评优+破格晋升人员</p></div>`;
+    <p style="font-size:12px;color:#888;line-height:1.8"><b>取数范围：</b>编制及在岗人数均不含实习生、外包、蓝领；<br>
+    <b>指标定义：</b>①"关键岗位"指承载关键组织职责和目标的岗位(所有AB类)；②"核心人员"指关键岗位在岗人员；③"核心人员胜任"指关键岗位在岗人员年度人才盘点在1235格子；④"优秀人才"指人才盘点123格子+集团及BU年度评优+破格晋升人员；⑤"在招岗位数"指已启动招聘未入职的岗位；⑥"未启动岗位数"指尚未启动招聘的岗位。</p></div>`;
 
   // Tab bar
   h+='<div class="tb"><span class="on" onclick="switchTab(event,\'t31\')">3.1 编制数</span><span onclick="switchTab(event,\'t32\')">3.2 在职人数</span><span onclick="switchTab(event,\'t33\')">3.3 满编率</span><span onclick="switchTab(event,\'t34\')">3.4 关键岗位</span></div>';
@@ -548,7 +548,9 @@ function renderKeyPosTable(d){
 // ── 人员变动 ──
 function renderChanges(d){
   const ch=d.personnel_changes;if(!ch)return'<p>暂无</p>';
-  let h='<table class="tbl"><thead>';
+  let h='<div class="subsec"><div class="subsec-title">取数口径</div>';
+  h+='<p style="font-size:12px;color:#888;line-height:1.8">调动取数逻辑为三级部门+四级部门+岗位对比上月有变化的员工</p></div>';
+  h+='<table class="tbl"><thead>';
   // 二级部门 header
   h+='<tr><th rowspan="2">变动类型</th><th rowspan="2" style="width:70px">PBU</th>';
   for(const c of so){const sc=subCols(c);h+=`<th colspan="${sc.length}" class="hdr">${dn[c]}</th>`}
@@ -575,7 +577,9 @@ function renderChanges(d){
 function renderRetention(d){
   const data=d.retention;if(!data||!data.data)return'<p>暂无</p>';
   // 双层表头
-  let h='<table class="tbl"><thead>';
+  let h='<div class="subsec"><div class="subsec-title">取数口径</div>';
+  h+='<p style="font-size:12px;color:#888;line-height:1.8">①"优秀人才"指人才盘点123格子+集团及BU年度评优+破格晋升人员</p></div>';
+  h+='<table class="tbl"><thead>';
   h+='<tr><th rowspan="2">指标</th>'+pbuHdr();
   for(const c of so){const sc=subCols(c);h+=`<th colspan="${sc.length}" class="hdr">${dn[c]}</th>`}
   h+='</tr><tr>';
@@ -635,8 +639,6 @@ function renderRetention(d){
   h+='</tr>';
 
   h+='</tbody></table>';
-  h+='<div class="subsec" style="margin-top:8px"><div class="subsec-title">取数口径</div>';
-  h+='<p style="font-size:12px;color:#888;line-height:1.8">①"优秀人才"指人才盘点123格子+集团及BU年度评优+破格晋升人员</p></div>';
   h+='<div class="chart-box chart-full" id="chart_retention" style="height:380px;margin-top:12px"></div>';
   if(data.analysis)h+=`<div class="ana">▶ ${data.analysis}</div>`;
   return h;
