@@ -381,7 +381,8 @@ def parse_vacancy_analysis(wb):
 def parse_changes_analysis(wb, personnel_changes):
     """从数据源分析本月人员变动"""
     from datetime import datetime
-    month_start = datetime(2026, 5, 1)
+    now = datetime.now()
+    month_start = datetime(now.year, now.month, 1)
 
     # 入职总数 = PBU汇总
     total_hires = 0
