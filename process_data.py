@@ -245,10 +245,13 @@ def parse_key_position(ws, wb):
                     continue
                 if '英国区' in dept2:
                     uk_positions.append(pos)
-                elif not any(d in dept2 for d in europe_depts) and dept2 not in ('-', ''):
+                elif not any(d in dept2 for d in europe_depts) and '澳洲' not in dept2 and '日本' not in dept2 and '北美' not in dept2 and '四海' not in dept2:
                     middle_positions.append(pos)
             break
 
+    # Deduplicate
+    uk_positions = list(dict.fromkeys(uk_positions))
+    middle_positions = list(dict.fromkeys(middle_positions))
     uk_str = '、'.join(uk_positions) if uk_positions else '关键岗位'
     mid_str = '、'.join(middle_positions) if middle_positions else '高级商务主管、精益经理'
 
