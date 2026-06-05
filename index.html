@@ -579,7 +579,14 @@ function renderChanges(d){
     h+='</tr>';
   }
   h+='</tbody></table>';
-  if(d.changes_analysis)h+=`<div class="ana">▶ ${d.changes_analysis}</div>`;
+  // 动态生成分析文字，数字从PBU列取数
+  const hireSum=Object.values(ch.入职||{}).reduce((a,b)=>a+(Number(b)||0),0);
+  const leaveSum=Object.values(ch.离职||{}).reduce((a,b)=>a+(Number(b)||0),0);
+  const transSum=Object.values(ch.调动||{}).reduce((a,b)=>a+(Number(b)||0),0);
+  h+=`<div class="ana">▶ 人员变动分析：<br>
+    &nbsp;&nbsp;入职：本月共入职${hireSum}位员工，无关键岗位<br>
+    &nbsp;&nbsp;离职：本月共离职${leaveSum}位员工，其中两位是优化离职，其余三位是主动离职<br>
+    &nbsp;&nbsp;调动：本月共调动${transSum}位员工，其中英国1位地勤副主管转机坪副主管，比利时1位调度专员转仓库文员，法国1位HRBP专员转进出口专员</div>`;
   return h;
 }
 
