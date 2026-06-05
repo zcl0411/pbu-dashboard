@@ -405,7 +405,8 @@ def parse_changes_analysis(wb, personnel_changes):
                 lingse = str(ws.cell(r, 17).value or '').strip()
                 pos = str(ws.cell(r, 13).value or '').strip()
                 is_key = str(ws.cell(r, 19).value or '').strip()
-                if lingse == '蓝领':
+                dept1 = str(ws.cell(r, 8).value or '').strip()
+                if lingse == '蓝领' or 'PBU口岸' not in dept1:
                     continue
                 if hire_date and isinstance(hire_date, datetime) and hire_date >= month_start and status not in ('离职', '待离职'):
                     if pos and pos not in hire_positions:
