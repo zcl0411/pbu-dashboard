@@ -635,7 +635,8 @@ function renderRetention(d){
   h+='</tr>';
 
   h+='</tbody></table>';
-  h+='<p style="font-size:11px;color:#888;margin:8px 0 0">取数口径：①"优秀人才"指人才盘点123格子+集团及BU年度评优+破格晋升人员</p>';
+  h+='<div class="subsec" style="margin-top:8px"><div class="subsec-title">取数口径</div>';
+  h+='<p style="font-size:12px;color:#888;line-height:1.8">①"优秀人才"指人才盘点123格子+集团及BU年度评优+破格晋升人员</p></div>';
   h+='<div class="chart-box chart-full" id="chart_retention" style="height:380px;margin-top:12px"></div>';
   if(data.analysis)h+=`<div class="ana">▶ ${data.analysis}</div>`;
   return h;
