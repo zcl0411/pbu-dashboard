@@ -228,12 +228,50 @@ function sec(title,id,body,open){
 
 // ── 摘要 ──
 function renderSummary(d){
-  const s=d.summary;const rc=v=>v>=.85?'g':v>=.7?'o':'r';
+  const rc=v=>v>=.85?'g':v>=.7?'o':'r';
   function it(l,v,c,sub){return `<div class="summary-item"><div class="sl">${l}</div><div class="sv ${c||''}">${v}</div>${sub?`<div class="summary-sub">${sub}</div>`:''}</div>`}
   function sp(){return '<div class="summary-sep"></div>'}
+
+  // 从表格数据动态计算，确保与下方表格一致
+  const estabData=d.establishment&&d.establishment.data?d.establishment.data:null;
+  const actualData=d.actual_headcount&&d.actual_headcount.data?d.actual_headcount.data:null;
+  const estabRow=estabData?estabData.find(r=>r.label&&r.label.includes('编制数')&&!r.label.includes('关键')):null;
+  const actualRow=actualData?actualData.find(r=>r.label&&r.label.includes('在职人数')):null;
+  const estabTotal=estabRow?pbuSum(estabRow):0;
+  const actualTotal=actualRow?pbuSum(actualRow):0;
+  const vacancy=estabTotal-actualTotal;
+  const fillRate=estabTotal>0?actualTotal/estabTotal:0;
+
+  // 关键岗位数据
+  const kp=d.key_position&&d.key_position.data?d.key_position.data:null;
+  const kpEstab=kp?kp.find(r=>r.label&&r.label.includes('编制数')&&!r.label.includes('目标')):null;
+  const kpActual=kp?kp.find(r=>r.label&&r.label.includes('在岗人数')&&!r.label.includes('目标')):null;
+  const kpFill=kp?kp.find(r=>r.label&&r.label.includes('满编率')):null;
+  const kpComp=kp?kp.find(r=>r.label&&r.label.includes('胜任率')):null;
+  const kpEstabTotal=kpEstab?pbuSum(kpEstab):0;
+  const kpActualTotal=kpActual?pbuSum(kpActual):0;
+  const kpVacancy=kpEstabTotal-kpActualTotal;
+  const kpFillRate=kpFill?pbuSum(kpFill)/Object.keys(kpFill).filter(k=>k.length===1).length:0;
+  // Compute kp fill rate properly: sum actual / sum estab
+  const kpFillRate2=kpEstabTotal>0?kpActualTotal/kpEstabTotal:0;
+
+  // 核心人员胜任率: sum 胜任 / sum 在岗
+  const kpCompRow=kp?kp.find(r=>r.label&&r.label.includes('胜任人数')):null;
+  const kpCompTotal=kpCompRow?pbuSum(kpCompRow):0;
+  const compRate=kpActualTotal>0?kpCompTotal/kpActualTotal:0;
+
+  // 优秀人才保留率 from retention
+  const ret=d.retention&&d.retention.data?d.retention.data:null;
+  const retRow=ret?ret.find(r=>r.label==='保留率'&&r.sub_label==='合计'):null;
+  let retRate=0, retCount=0;
+  if(retRow){
+    const rates=[];for(const c of so){const v=retRow[c];if(v!=null)rates.push(Number(v))}
+    retRate=rates.length?rates.reduce((a,b)=>a+b,0)/rates.length:0;
+  }
+
   return `<div class="summary-cards">
-    <div class="summary-row">${it('PBU 编制总数',fnum(s.编制总数),'','不含蓝领/实习生/外包')}${sp()}${it('PBU 在职总数',fnum(s.在职总数),'','不含蓝领')}${sp()}${it('PBU 空编数',fnum(s.空编数),'o','空缺岗位')}${sp()}${it('PBU 满编率',fpct(s.满编率),rc(s.满编率),'在职/编制')}</div>
-    <div class="summary-row">${it('关键岗位 编制总数',fnum(s.关键岗位_编制总数),'','所有AB类')}${sp()}${it('关键岗位 在职人数',fnum(s.关键岗位_在职人数))}${sp()}${it('关键岗位 空编数',fnum(s.关键岗位_空编数),'o')}${sp()}${it('关键岗位 满编率',fpct(s.关键岗位_满编率),rc(s.关键岗位_满编率),'在岗/编制')}${sp()}${it('核心人员胜任率',fpct(s.核心人员胜任率),rc(s.核心人员胜任率),'盘点12345格子')}${sp()}${it('优秀人才保留率',fpct(s.优秀人才保留率),'g','123+评优+破格晋升')}</div>
+    <div class="summary-row">${it('PBU 编制总数',fnum(estabTotal),'','不含蓝领/实习生/外包')}${sp()}${it('PBU 在职总数',fnum(actualTotal),'','不含蓝领')}${sp()}${it('PBU 空编数',fnum(vacancy),'o','空缺岗位')}${sp()}${it('PBU 满编率',fpct(fillRate),rc(fillRate),'在职/编制')}</div>
+    <div class="summary-row">${it('关键岗位 编制总数',fnum(kpEstabTotal),'','所有AB类')}${sp()}${it('关键岗位 在职人数',fnum(kpActualTotal))}${sp()}${it('关键岗位 空编数',fnum(kpVacancy),'o')}${sp()}${it('关键岗位 满编率',fpct(kpFillRate2),rc(kpFillRate2),'在岗/编制')}${sp()}${it('核心人员胜任率',fpct(compRate),rc(compRate),'盘点12345格子')}${sp()}${it('优秀人才保留率',fpct(retRate),'g','123+评优+破格晋升')}</div>
   </div>`;
 }
 
