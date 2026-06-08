@@ -304,7 +304,7 @@ function renderDensity(d){
   h+=renderFillTable(d);
   h+='<div class="chart-box chart-full" id="chart_fillrate" style="height:400px;margin-top:12px"></div>';
   h+=renderCostDetail(d);
-  h+='<div class="ana">'+genVacancyAnalysis(d)+'</div>';
+  h+='<div class="ana">▶ '+(d.fill_rate.analysis||genVacancyAnalysis(d))+'</div>';
   h+='</div>';
 
   // Tab 3.4
