@@ -604,7 +604,7 @@ def main():
         with open(index_path, 'r', encoding='utf-8') as f:
             existing_months = json.load(f)
 
-    if month_label not in existing_months:
+    if month_label not in existing_months and not month_label.startswith('_'):
         existing_months.append(month_label)
         existing_months.sort()
         save_json(existing_months, str(index_path))
