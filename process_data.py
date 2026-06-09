@@ -194,6 +194,8 @@ def parse_fill_rate(ws):
         lbl = row.get("label", "")
         if not lbl or "关键岗位" in lbl or "数据分析" in lbl or "部门" in lbl or "二级" in lbl or "三级" in lbl or "3." in lbl:
             continue
+        if lbl in ("在招岗位数", "未启动岗位数"):
+            continue
         cost_rows.append(row)
 
     return {
