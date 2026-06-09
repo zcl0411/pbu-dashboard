@@ -161,7 +161,7 @@ function switchMonth(m){currentMonth=m;document.getElementById('ms').value=m;ren
 function prevMonth(){const i=months.indexOf(currentMonth);if(i>0)switchMonth(months[i-1])}
 function nextMonth(){const i=months.indexOf(currentMonth);if(i<months.length-1)switchMonth(months[i+1])}
 
-function fpct(v){return v==null?'-':(v*100).toFixed(1)+'%'}
+function fpct(v){return v==null?'-':(v*100).toFixed(0)+'%'}
 function fnum(v){return v==null?'-':typeof v==='number'?Math.round(v).toLocaleString():v}
 function pc(v){if(v==null)return'';if(v>=.9)return'g';if(v>=.8)return'';if(v>=.6)return'o';return'r'}
 
@@ -722,7 +722,7 @@ function initCharts(d){
 function initFillRateChart(d){
   const fe=document.getElementById('chart_fillrate');if(!fe)return;
   const c=echarts.init(fe);const fr=[];
-  for(const row of d.fill_rate.data){if(row.label&&row.label.includes('满编率')){for(const x of ac)fr.push(row[x]!=null?Number((row[x]*100).toFixed(1)):0);break}}
+  for(const row of d.fill_rate.data){if(row.label&&row.label.includes('满编率')){for(const x of ac)fr.push(row[x]!=null?Number((row[x]*100).toFixed(0)):0);break}}
   c.setOption({title:{text:'各部门满编率',left:'center',textStyle:{fontSize:13}},tooltip:{trigger:'axis',formatter:p=>p[0].name+'<br/>满编率: <b>'+p[0].value+'%</b>'},xAxis:{type:'category',data:ac.map(x=>dl[x]),axisLabel:{fontSize:10,interval:0,align:'center',formatter:v=>{v=v.replace('PBU技术部','技术部');return v.length>4?v.slice(0,4):v}}},yAxis:{type:'value',max:100,axisLabel:{formatter:'{value}%'}},grid:{bottom:100},series:[{type:'bar',data:fr,itemStyle:{color:function(p){return p.value>=80?'#1890ff':'#f59e0b'}},label:{show:true,position:'top',formatter:'{c}%'}}]});
 }
 function initKeyFillChart(d){
@@ -730,7 +730,7 @@ function initKeyFillChart(d){
   const c=echarts.init(kfe);const kr=[];
   const depts=Object.keys(d.key_position.level2_headers||{}).filter(k=>k!=='C').sort();
   for(const row of d.key_position.data){
-    if(row.label&&row.label.includes('满编率')){for(const x of depts)kr.push(row[x]!=null?Number((row[x]*100).toFixed(1)):0);break}
+    if(row.label&&row.label.includes('满编率')){for(const x of depts)kr.push(row[x]!=null?Number((row[x]*100).toFixed(0)):0);break}
   }
   c.setOption({title:{text:'关键岗位满编率',left:'center',textStyle:{fontSize:13}},tooltip:{trigger:'axis'},xAxis:{type:'category',data:depts.map(x=>d.key_position.level2_headers[x]||x),axisLabel:{fontSize:10,interval:0,align:'center',formatter:v=>{v=v.replace('PBU技术部','技术部');return v.length>4?v.slice(0,4):v}}},yAxis:{type:'value',max:100,axisLabel:{formatter:'{value}%'}},grid:{bottom:100},series:[{type:'bar',data:kr,itemStyle:{color:function(p){return p.value>=80?'#1890ff':'#f59e0b'}},label:{show:true,position:'top',formatter:'{c}%'}}]});
 }
@@ -739,7 +739,7 @@ function initKeyCompChart(d){
   const c=echarts.init(kce);const cr=[];
   const depts=Object.keys(d.key_position.level2_headers||{}).filter(k=>k!=='C').sort();
   for(const row of d.key_position.data){
-    if(row.label&&row.label.includes('胜任率')){for(const x of depts)cr.push(row[x]!=null?Number((row[x]*100).toFixed(1)):0);break}
+    if(row.label&&row.label.includes('胜任率')){for(const x of depts)cr.push(row[x]!=null?Number((row[x]*100).toFixed(0)):0);break}
   }
   if(!cr.length){
     c.setOption({title:{text:'核心人员胜任率（暂无数据）',left:'center',textStyle:{fontSize:13}}});
