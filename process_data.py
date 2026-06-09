@@ -113,31 +113,32 @@ def parse_headcount_summary(ws):
 
 def parse_dept_table(ws, start_row, end_row, label_col="A", data_start_col="C"):
     """解析通用部门表格（如编制、在职）"""
-    # Row start_row: 二级部门 header
-    # Row start_row+1: 三级部门 header
-    # Rows start_row+2 to end_row: cost type rows + data
     dept_headers = {}
-    for col_letter in ['C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R']:
+    for col_letter in ['B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R']:
         val = ws[f"{col_letter}{start_row}"].value
         if val:
             dept_headers[col_letter] = str(val).strip()
 
     level3_headers = {}
-    for col_letter in ['C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R']:
+    for col_letter in ['B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R']:
         val = ws[f"{col_letter}{start_row+1}"].value
         if val:
             level3_headers[col_letter] = str(val).strip()
 
-    # Read all rows between start_row+2 and end_row
     data_rows = []
     for row_num in range(start_row + 2, end_row + 1):
         row_label = ws[f"A{row_num}"].value
-        row_type = ws[f"B{row_num}"].value  # 白领/灰领
-        if row_label is None and row_type is None:
+        row_b = ws[f"B{row_num}"].value
+        if row_label is None and row_b is None:
             continue
 
-        row_data = {"label": str(row_label).strip() if row_label else "",
-                     "type": str(row_type).strip() if row_type else ""}
+        row_data = {"label": str(row_label).strip() if row_label else ""}
+        # B column: if numeric, treat as PBU total; if string, treat as type
+        if row_b is not None:
+            if isinstance(row_b, (int, float)):
+                row_data['B'] = float(row_b)
+            else:
+                row_data['type'] = str(row_b).strip()
         for col_letter in ['C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R']:
             val = ws[f"{col_letter}{row_num}"].value
             if val is not None:
@@ -162,31 +163,34 @@ def parse_headcount_actual(ws):
 
 
 def parse_fill_rate(ws):
-    """3.3 各部门满编率展示 (rows 40-54)"""
+    """3.3 各部门满编率展示 (rows 40-56)"""
     # Headers: row 41=二级, row 42=三级
     dept_headers = {}
     level3_headers = {}
-    for col_letter in ['C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R']:
+    for col_letter in ['B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R']:
         v2 = ws[f"{col_letter}41"].value
         v3 = ws[f"{col_letter}42"].value
         if v2: dept_headers[col_letter] = str(v2).strip()
         if v3: level3_headers[col_letter] = str(v3).strip()
 
-    # Data rows (rows 43-52)
+    # Data rows (rows 43-54)
     data_rows = []
-    for row_num in range(43, 53):
+    for row_num in range(43, 55):
         row_label = ws[f"A{row_num}"].value
         if row_label is None:
             continue
-        row_data = {"label": str(row_label).strip()}
-        for col_letter in ['C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R']:
+        lbl = str(row_label).strip()
+        if '部门' in lbl and ('二级' in lbl or '三级' in lbl):
+            continue
+        row_data = {"label": lbl}
+        for col_letter in ['B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R']:
             val = ws[f"{col_letter}{row_num}"].value
             if val is not None:
                 row_data[col_letter] = float(val) if isinstance(val, (int, float)) else val
         data_rows.append(row_data)
 
-    # Analysis text (now at row 54)
-    analysis = ws["A54"].value or ""
+    # Analysis text (row 56)
+    analysis = ws["A56"].value or ""
 
     # Filter cost_detail: only cost rows (skip 在招/未启动 and other non-cost rows)
     cost_rows = []
@@ -210,21 +214,24 @@ def parse_fill_rate(ws):
 
 
 def parse_key_position(ws, wb):
-    """3.4 关键岗位满编率 & 核心人员胜任率 (rows 55-64)"""
-    # Headers: row 56 = 二级部门
+    """3.4 关键岗位满编率 & 核心人员胜任率 (rows 57-68)"""
+    # Headers: row 58 = 二级部门
     l2_headers = {}
-    for col_letter in ['C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R']:
-        v2 = ws[f"{col_letter}56"].value
+    for col_letter in ['B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R']:
+        v2 = ws[f"{col_letter}58"].value
         if v2: l2_headers[col_letter] = str(v2).strip()
 
-    # Data rows (rows 57-66): includes target, estab, actual, fill_rate, comp_target, comp_total, comp_actual, comp_rate
+    # Data rows (rows 59-66)
     data_rows = []
-    for row_num in range(57, 67):
+    for row_num in range(59, 67):
         row_label = ws[f"A{row_num}"].value
         if row_label is None:
             continue
-        row_data = {"label": str(row_label).strip()}
-        for col_letter in ['C','F','H','K','L','M','N','O','P','Q','R']:
+        lbl = str(row_label).strip()
+        if '部门' in lbl:
+            continue
+        row_data = {"label": lbl}
+        for col_letter in ['B','C','F','H','K','L','M','N','O','P','Q','R']:
             val = ws[f"{col_letter}{row_num}"].value
             if val is not None:
                 row_data[col_letter] = float(val) if isinstance(val, (int, float)) else val
@@ -278,35 +285,32 @@ def parse_personnel_changes(ws):
     """四、各部门月度人员变动展示 - 通过标签搜索而非固定行号"""
     result = {}
     analysis = ""
-    # Search rows 65-80 for 入职/离职/调动 labels
     found_section = False
     valid_labels = {'入职', '离职', '调动'}
-    for row_num in range(65, 85):
+    for row_num in range(69, 85):
         label = ws[f"A{row_num}"].value
         if label is None:
             continue
         key = str(label).strip()
-        # Detect section start
         if '四、' in key or '人员变动' in key:
             found_section = True
             continue
         if not found_section:
             continue
-        # Check if this is an analysis row (contains "数据分析" or starts with "五、")
         if '数据分析' in key or key.startswith('五、') or key.startswith('六、'):
             if '数据分析' in key:
                 analysis = key
             break
         if key in valid_labels:
             vals = {}
-            for col_letter in ['C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R']:
+            for col_letter in ['B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R']:
                 val = ws[f"{col_letter}{row_num}"].value
                 if val is not None:
                     vals[col_letter] = int(val) if isinstance(val, (int, float)) else val
             result[key] = vals
 
     if not analysis:
-        analysis = ws["A73"].value or ""
+        analysis = ws["A75"].value or ""
     return result, str(analysis)
 
 
@@ -316,11 +320,10 @@ def parse_retention(ws):
     last_label = None
     found_section = False
     valid_first_labels = {'目标留任人才数量', '在职', '离职', '保留率'}
-    for row_num in range(73, 90):
+    for row_num in range(76, 90):
         row_label = ws[f"A{row_num}"].value
         b_val = ws[f"B{row_num}"].value
 
-        # Detect section start
         key_a = str(row_label).strip() if row_label else ''
         if '五、' in key_a or '优秀人才保留' in key_a or '二级部门' in key_a:
             found_section = True
@@ -328,27 +331,26 @@ def parse_retention(ws):
         if '三级部门' in key_a and found_section:
             continue
 
-        # If we see a known retention label, auto-start the section
         if key_a in valid_first_labels:
             found_section = True
 
         if not found_section:
             continue
 
-        # Stop at next section or analysis
         if '六、' in key_a or '改善建议' in key_a:
             break
 
-        # Skip analysis rows
         if '数据分析' in key_a:
             continue
 
-        # Handle merged cells: if A is None but B has value, use last A label
+        # Skip "实际留任人才数量" row — HTML generates this dynamically
+        if '实际留任' in key_a:
+            continue
+
         label = key_a if row_label else (last_label if b_val else None)
         if label is None and b_val is None:
             continue
 
-        # Check if this is a data row (has valid first-column label or sub_label)
         if label and label not in valid_first_labels and '保留率' not in label:
             continue
 
@@ -356,13 +358,13 @@ def parse_retention(ws):
         row_data = {"label": label or ""}
         if b_val:
             row_data["sub_label"] = str(b_val).strip()
-        for col_letter in ['C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R']:
+        for col_letter in ['B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R']:
             val = ws[f"{col_letter}{row_num}"].value
             if val is not None:
                 row_data[col_letter] = float(val) if isinstance(val, (int, float)) else val
         data_rows.append(row_data)
 
-    analysis = '截止5月底，荷兰区1位优秀人才离职，离职类型为优化离职。'
+    analysis = '截止5月底，共2位优秀人才离职，荷兰区1位离职的岗位是仓库主管，离职类型为优化离职，法国区1位离职的岗位是销售专员，离职类型为主动离职，暂不影响优秀人才留任人数的达标情况'
     return {"data": data_rows, "analysis": analysis}
 
 
