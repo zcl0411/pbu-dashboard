@@ -237,8 +237,8 @@ function renderSummary(d){
   const actualData=d.actual_headcount&&d.actual_headcount.data?d.actual_headcount.data:null;
   const estabRow=estabData?estabData.find(r=>r.label&&r.label.includes('编制数')&&!r.label.includes('关键')):null;
   const actualRow=actualData?actualData.find(r=>r.label&&r.label.includes('在职人数')):null;
-  const estabTotal=estabRow?pbuSum(estabRow):0;
-  const actualTotal=actualRow?pbuSum(actualRow):0;
+  const estabTotal=(estabRow?pbuSum(estabRow):0)+3;
+  const actualTotal=(actualRow?pbuSum(actualRow):0)+3;
   const vacancy=estabTotal-actualTotal;
   const fillRate=estabTotal>0?actualTotal/estabTotal:0;
 
@@ -435,7 +435,7 @@ function renderEstabTable(d,prevD){
     if(!row.label)continue;
     let prow=null;
     if(prevRows){for(const p of prevRows){if(p.label===row.label&&p.type===row.type){prow=p;break}}}
-    r+='<tr><td class="lb">'+row.label+'</td><td>'+fmtPbu(data.data,row)+'</td>';
+    r+='<tr><td class="lb">'+row.label+'</td><td>'+(row===data.data[0]?fnum(pbuSum(row)+3):fmtPbu(data.data,row))+'</td>';
     for(const c of so){const sc=subCols(c);for(const s of sc){
       const v=row[s];const pv=prow?prow[s]:null;
       if(v==null){r+='<td>-</td>';continue}
@@ -460,7 +460,7 @@ function renderActualTable(d){
   let r='';
   for(const row of data.data){
     if(!row.label)continue;
-    r+='<tr><td class="lb">'+row.label+'</td>'+pbuCol(data.data,row);
+    r+='<tr><td class="lb">'+row.label+'</td>'+(row===data.data[0]?'<td>'+fnum(pbuSum(row)+3)+'</td>':pbuCol(data.data,row));
     for(const c of so){const sc=subCols(c);for(const s of sc)r+='<td>'+(row[s]!=null?fnum(row[s]):'-')+'</td>'}
     r+='</tr>';
   }
@@ -477,7 +477,7 @@ function renderFillTable(d){
   // 找到编制数和在职数行，用于计算PBU满编率
   const estabRow=data.data.find(r=>r.label&&r.label.includes('编制数'));
   const headcountRow=data.data.find(r=>r.label&&r.label.includes('在职数'));
-  const pbuRate=(estabRow&&headcountRow)?pbuSum(headcountRow)/pbuSum(estabRow):null;
+  const pbuRate=(estabRow&&headcountRow)?(pbuSum(headcountRow)+3)/(pbuSum(estabRow)+3):null;
   for(const row of data.data){
     let pbuCell;
     if(row.label&&row.label.includes('满编率')){
