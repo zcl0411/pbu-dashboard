@@ -188,20 +188,22 @@ def parse_fill_rate(ws):
     # Analysis text (now at row 54)
     analysis = ws["A54"].value or ""
 
-    # Filter cost_detail: exclude rows with non-cost labels
+    # Filter cost_detail: only cost rows (skip 在招/未启动 and other non-cost rows)
     cost_rows = []
+    main_data_extra = []  # 在招岗位数, 未启动岗位数
     for row in data_rows[3:]:
         lbl = row.get("label", "")
         if not lbl or "关键岗位" in lbl or "数据分析" in lbl or "部门" in lbl or "二级" in lbl or "三级" in lbl or "3." in lbl:
             continue
         if lbl in ("在招岗位数", "未启动岗位数"):
+            main_data_extra.append(row)
             continue
         cost_rows.append(row)
 
     return {
         "level2_headers": dept_headers,
         "level3_headers": level3_headers,
-        "data": data_rows[0:3],          # 部门编制数, 部门在职数, 部门满编率
+        "data": data_rows[0:3] + main_data_extra,  # 编制, 在职, 满编率, 在招, 未启动
         "cost_detail": cost_rows,
         "analysis": str(analysis)
     }
