@@ -215,9 +215,9 @@ def parse_key_position(ws, wb):
         v2 = ws[f"{col_letter}56"].value
         if v2: l2_headers[col_letter] = str(v2).strip()
 
-    # Data rows (rows 57-62): 目标在岗人数, 编制数, 在岗人数, 胜任人数, 满编率, 胜任率
+    # Data rows (rows 57-66): includes target, estab, actual, fill_rate, comp_target, comp_total, comp_actual, comp_rate
     data_rows = []
-    for row_num in range(57, 63):
+    for row_num in range(57, 67):
         row_label = ws[f"A{row_num}"].value
         if row_label is None:
             continue
