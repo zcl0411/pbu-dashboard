@@ -476,20 +476,26 @@ function renderFillTable(d){
   for(const c of so){const sc=subCols(c);h1+=`<th colspan="${sc.length}" class="hdr">${dn[c]}</th>`;for(const s of sc)h2+=`<th style="font-size:10px">${l3[s]||dl[s]}</th>`}
   h1+='</tr>';h2+='</tr>';
   let r='';
-  // 找到编制数和在职数行，用于计算PBU满编率
-  const estabRow=data.data.find(r=>r.label&&r.label.includes('编制数'));
-  const headcountRow=data.data.find(r=>r.label&&r.label.includes('在职数'));
+  // 找到编制数和在职数行（从3.1/3.2取数，确保同步）
+  const estabSrc=d.establishment&&d.establishment.data?d.establishment.data.find(r=>r.label&&r.label.includes('编制数')):null;
+  const hcSrc=d.actual_headcount&&d.actual_headcount.data?d.actual_headcount.data.find(r=>r.label&&r.label.includes('在职人数')):null;
+  const estabRow=estabSrc||data.data.find(r=>r.label&&r.label.includes('编制数'));
+  const headcountRow=hcSrc||data.data.find(r=>r.label&&r.label.includes('在职数'));
   const pbuRate=(estabRow&&headcountRow)?(pbuSum(headcountRow)+3)/(pbuSum(estabRow)+3):null;
   for(const row of data.data){
+    // 部门编制数/在职数从3.1/3.2取数，保持同步
+    let srcRow=row;
+    if(row.label&&row.label.includes('编制数')&&estabSrc)srcRow=estabSrc;
+    if(row.label&&row.label.includes('在职数')&&hcSrc)srcRow=hcSrc;
     let pbuCell;
     if(row.label&&row.label.includes('满编率')){
       pbuCell='<td class="'+pc(pbuRate)+'">'+fpct(pbuRate)+'</td>';
     }else{
-      pbuCell=pbuCol(data.data,row);
+      pbuCell='<td>'+fnum(pbuSum(srcRow))+'</td>';
     }
     r+='<tr><td class="lb">'+row.label+'</td>'+pbuCell;
     for(const c of so){const sc=subCols(c);for(const s of sc){
-      const v=row[s];
+      const v=srcRow[s];
       if(v==null){r+='<td>-</td>';continue}
       r+=row.label.includes('率')?`<td class="${pc(v)}">${fpct(v)}</td>`:`<td>${fnum(v)}</td>`;
     }}
