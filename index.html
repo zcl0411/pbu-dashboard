@@ -340,7 +340,7 @@ function renderDensity(d){
   h+='<div class="tc" id="t33">';
   h+='<div class="subsec-title" style="margin-bottom:8px">3.3 各部门满编率展示</div>';
   h+=renderFillTable(d);
-  h+='<div class="chart-box chart-full" id="chart_fillrate" style="height:400px;margin-top:12px"></div>';
+  h+='<div class="chart-box chart-full" id="chart_fillrate" style="height:300px;margin-top:12px"></div>';
   h+=renderCostDetail(d);
   h+='<div class="ana">▶ '+(d.fill_rate.analysis||genVacancyAnalysis(d))+'</div>';
   h+='</div>';
@@ -349,7 +349,7 @@ function renderDensity(d){
   h+='<div class="tc" id="t34">';
   h+='<div class="subsec-title" style="margin-bottom:8px">3.4 关键岗位满编率 & 核心人员胜任率</div>';
   h+=renderKeyPosTable(d);
-  h+='<div class="chart-grid"><div class="chart-box" id="chart_key_fill" style="height:350px"></div><div class="chart-box" id="chart_key_comp" style="height:350px"></div></div>';
+  h+='<div class="chart-grid"><div class="chart-box" id="chart_key_fill" style="height:280px"></div><div class="chart-box" id="chart_key_comp" style="height:280px"></div></div>';
   if(d.key_position.analysis)h+=`<div class="ana">▶ ${d.key_position.analysis}</div>`;
   h+='</div>';
 
