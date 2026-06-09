@@ -553,10 +553,10 @@ function renderCostDetail(d){
 
 function renderKeyPosTable(d){
   const data=d.key_position;const l2=data.level2_headers||{};
-  // PBU column = C, department columns start from D
-  const deptCols=[];for(const c of so){if(c!=='C')deptCols.push(c)}
+  // 3.4列映射不同于其他表格：D=欧洲一区, F=欧洲二区, ...（C=PBU）
+  const deptCols=Object.keys(l2).filter(k=>k!=='C').sort();
   let h='<table class="tbl"><thead><tr><th>指标</th><th>PBU</th>';
-  for(const c of deptCols)h+=`<th>${l2[c]||dn[c]}</th>`;
+  for(const c of deptCols)h+=`<th>${l2[c]||''}</th>`;
   h+='</tr></thead><tbody>';
   for(const row of data.data){
     const label=row.label||'';
@@ -728,16 +728,16 @@ function initFillRateChart(d){
 function initKeyFillChart(d){
   const kfe=document.getElementById('chart_key_fill');if(!kfe)return;
   const c=echarts.init(kfe);const kr=[];
-  const depts=so.filter(c=>c!=='C');
+  const depts=Object.keys(d.key_position.level2_headers||{}).filter(k=>k!=='C').sort();
   for(const row of d.key_position.data){
     if(row.label&&row.label.includes('满编率')){for(const x of depts)kr.push(row[x]!=null?Number((row[x]*100).toFixed(1)):0);break}
   }
-  c.setOption({title:{text:'关键岗位满编率',left:'center',textStyle:{fontSize:13}},tooltip:{trigger:'axis'},xAxis:{type:'category',data:depts.map(x=>dn[x]),axisLabel:{fontSize:10,interval:0,align:'center',formatter:v=>{v=v.replace('PBU技术部','技术部');return v.length>4?v.slice(0,4):v}}},yAxis:{type:'value',max:100,axisLabel:{formatter:'{value}%'}},grid:{bottom:100},series:[{type:'bar',data:kr,itemStyle:{color:function(p){return p.value>=80?'#1890ff':'#f59e0b'}},label:{show:true,position:'top',formatter:'{c}%'}}]});
+  c.setOption({title:{text:'关键岗位满编率',left:'center',textStyle:{fontSize:13}},tooltip:{trigger:'axis'},xAxis:{type:'category',data:depts.map(x=>d.key_position.level2_headers[x]||x),axisLabel:{fontSize:10,interval:0,align:'center',formatter:v=>{v=v.replace('PBU技术部','技术部');return v.length>4?v.slice(0,4):v}}},yAxis:{type:'value',max:100,axisLabel:{formatter:'{value}%'}},grid:{bottom:100},series:[{type:'bar',data:kr,itemStyle:{color:function(p){return p.value>=80?'#1890ff':'#f59e0b'}},label:{show:true,position:'top',formatter:'{c}%'}}]});
 }
 function initKeyCompChart(d){
   const kce=document.getElementById('chart_key_comp');if(!kce)return;
   const c=echarts.init(kce);const cr=[];
-  const depts=so.filter(c=>c!=='C');
+  const depts=Object.keys(d.key_position.level2_headers||{}).filter(k=>k!=='C').sort();
   for(const row of d.key_position.data){
     if(row.label&&row.label.includes('胜任率')){for(const x of depts)cr.push(row[x]!=null?Number((row[x]*100).toFixed(1)):0);break}
   }
@@ -745,7 +745,7 @@ function initKeyCompChart(d){
     c.setOption({title:{text:'核心人员胜任率（暂无数据）',left:'center',textStyle:{fontSize:13}}});
     return;
   }
-  c.setOption({title:{text:'核心人员胜任率',left:'center',textStyle:{fontSize:13}},tooltip:{trigger:'axis'},xAxis:{type:'category',data:depts.map(x=>dn[x]),axisLabel:{fontSize:10,interval:0,align:'center',formatter:v=>{v=v.replace('PBU技术部','技术部');return v.length>4?v.slice(0,4):v}}},yAxis:{type:'value',max:100,axisLabel:{formatter:'{value}%'}},grid:{bottom:100},series:[{type:'bar',data:cr,itemStyle:{color:function(p){return p.value>=80?'#1890ff':'#f59e0b'}},label:{show:true,position:'top',formatter:'{c}%'}}]});
+  c.setOption({title:{text:'核心人员胜任率',left:'center',textStyle:{fontSize:13}},tooltip:{trigger:'axis'},xAxis:{type:'category',data:depts.map(x=>d.key_position.level2_headers[x]||x),axisLabel:{fontSize:10,interval:0,align:'center',formatter:v=>{v=v.replace('PBU技术部','技术部');return v.length>4?v.slice(0,4):v}}},yAxis:{type:'value',max:100,axisLabel:{formatter:'{value}%'}},grid:{bottom:100},series:[{type:'bar',data:cr,itemStyle:{color:function(p){return p.value>=80?'#1890ff':'#f59e0b'}},label:{show:true,position:'top',formatter:'{c}%'}}]});
 }
 
 window.addEventListener('resize',()=>{document.querySelectorAll('.chart-box').forEach(el=>{const i=echarts.getInstanceByDom(el);if(i)i.resize()})});
