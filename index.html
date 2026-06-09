@@ -492,7 +492,8 @@ function renderFillTable(d){
     }else{
       pbuCell='<td>'+fnum(pbuSum(srcRow))+'</td>';
     }
-    r+='<tr><td class="lb">'+row.label+'</td>'+pbuCell;
+    const isRowRate=row.label&&row.label.includes('率');
+    r+='<tr'+(isRowRate?' style="background:#fffde6"':'')+'><td class="lb">'+row.label+'</td>'+pbuCell;
     for(const c of so){const sc=subCols(c);for(const s of sc){
       const v=srcRow[s];
       if(v==null){r+='<td>-</td>';continue}
