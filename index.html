@@ -577,6 +577,7 @@ function renderKeyPosTable(d){
     let pbuVal;
     if(label.includes('满编率'))pbuVal=pbuFillRate;
     else if(label.includes('胜任率'))pbuVal=pbuCompRate;
+    else if(label.includes('目标核心人员胜任'))pbuVal=(pbuSum(row)||0)-2;
     else pbuVal=pbuSum(row);
     const rowStyle=isHighlight?' style="background:#fffde6"':'';
     h+='<tr'+rowStyle+'><td class="lb">'+label+'</td><td>'+(pbuVal!=null?(isRate?fpct(pbuVal):fnum(pbuVal)):'-')+'</td>';
