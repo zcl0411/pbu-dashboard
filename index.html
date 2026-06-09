@@ -654,15 +654,25 @@ function renderRetention(d){
     h+='</tr>';
   }
 
-  // 实际留任人才数量行 = 在职人数
+  // 实际留任人才数量行 = 在职人数，标色与目标对比
   const zhiRow=data.data.find(r=>r.label&&r.label.includes('在职'));
+  const targetRow=data.data.find(r=>r.label&&r.label.includes('目标'));
   if(zhiRow){
     let pbuZhi=null;
     {let s=0;for(const c of so)for(const x of subCols(c))s+=Number(zhiRow[x])||0;pbuZhi=(s||0)+2}
     h+='<tr style="font-weight:700;background:#f5f7fa"><td class="lb">实际留任人才数量</td><td>'+fnum(pbuZhi)+'</td>';
     for(const c of so){const sc=subCols(c);
       let deptSum=0;for(const s of sc)deptSum+=Number(zhiRow[s])||0;
-      h+=`<td colspan="${sc.length}">${deptSum?fnum(deptSum):'-'}</td>`;
+      let cls='',display=fnum(deptSum);
+      if(targetRow){
+        const tgt=Number(targetRow[c])||0;
+        const diff=tgt-deptSum;
+        if(deptSum>0&&tgt>0&&diff>0){
+          cls='r';
+          display=fnum(deptSum)+'<br><span style="font-size:10px;color:#ef4444">-'+diff+'</span>';
+        }else{cls='g'}
+      }
+      h+=`<td colspan="${sc.length}" class="${cls}">${display}</td>`;
     }
     h+='</tr>';
   }
