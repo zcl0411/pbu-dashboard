@@ -658,9 +658,11 @@ function renderRetention(d){
   const zhiRow=data.data.find(r=>r.label&&r.label.includes('在职'));
   const targetRow=data.data.find(r=>r.label&&r.label.includes('目标'));
   if(zhiRow){
-    let pbuZhi=null;
+    let pbuZhi=null,pbuTgt=null;
     {let s=0;for(const c of so)for(const x of subCols(c))s+=Number(zhiRow[x])||0;pbuZhi=(s||0)+2}
-    h+='<tr style="font-weight:700;background:#f5f7fa"><td class="lb">实际留任人才数量</td><td>'+fnum(pbuZhi)+'</td>';
+    if(targetRow){let s=0;for(const c of so)s+=Number(targetRow[c])||0;pbuTgt=(s||0)+1}
+    const pbuCls=(pbuTgt!=null&&pbuZhi!=null&&pbuTgt>pbuZhi)?'r':'g';
+    h+='<tr style="font-weight:700;background:#f5f7fa"><td class="lb">实际留任人才数量</td><td class="'+pbuCls+'">'+fnum(pbuZhi)+'</td>';
     for(const c of so){const sc=subCols(c);
       let deptSum=0;for(const s of sc)deptSum+=Number(zhiRow[s])||0;
       let cls='',display=fnum(deptSum);
