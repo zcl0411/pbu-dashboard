@@ -586,9 +586,9 @@ function renderKeyPosTable(d){
     for(const c of so){
       const v=row[c];
       if(v==null){h+='<td>-</td>';continue}
-      // Rate rows: <75% yellow font
+      // Rate rows: <75% red bold font
       if(isRate){
-        const rateCls=v<0.75?' style="color:#d4a017;font-weight:700"':'';
+        const rateCls=v<0.75?' style="color:#ef4444;font-weight:700"':'';
         h+=`<td${rateCls}>${fpct(v)}</td>`;
       }
       // 实际 vs 目标: 小于则红底红字
