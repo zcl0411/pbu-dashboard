@@ -163,7 +163,7 @@ function nextMonth(){const i=months.indexOf(currentMonth);if(i<months.length-1)s
 
 function fpct(v){return v==null?'-':(v*100).toFixed(0)+'%'}
 function fnum(v){return v==null?'-':typeof v==='number'?Math.round(v).toLocaleString():v}
-function pc(v){if(v==null)return'';if(v>=.85)return'g';if(v<=.7)return'r';return''}
+function pc(v){if(v==null)return'';if(v>=1)return'g';return''}
 
 function toggleSec(id){document.getElementById(id+'_b').classList.toggle('h');document.getElementById(id+'_t').classList.toggle('c');
   setTimeout(()=>{const el=document.getElementById(id+'_b');if(!el.classList.contains('h')){el.querySelectorAll('.chart-box').forEach(b=>{const i=echarts.getInstanceByDom(b);if(i)i.resize()})}},300)}
