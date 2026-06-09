@@ -490,6 +490,8 @@ function renderFillTable(d){
     let pbuCell;
     if(row.label&&row.label.includes('满编率')){
       pbuCell='<td class="'+pc(pbuRate)+'">'+fpct(pbuRate)+'</td>';
+    }else if(row.label&&(row.label.includes('编制数')||row.label.includes('在职数'))){
+      pbuCell='<td>'+fnum(pbuSum(srcRow)+3)+'</td>';
     }else{
       pbuCell='<td>'+fnum(pbuSum(srcRow))+'</td>';
     }
