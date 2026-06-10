@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PBU口岸事业部 - 组织架构图</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: "Microsoft YaHei", sans-serif; background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%); min-height: 100vh; padding: 30px; }
+.container { max-width: 1600px; margin: 0 auto; }
+.header { text-align: center; margin-bottom: 30px; }
+.header h1 { font-size: 24px; color: #1a237e; margin-bottom: 8px; }
+.header p { font-size: 13px; color: #888; }
+
+/* Org Chart Tree */
+.tree { display: flex; justify-content: center; }
+.tree ul { padding-top: 20px; position: relative; transition: all 0.5s; }
+.tree li { float: left; text-align: center; list-style-type: none; position: relative; padding: 20px 5px 0 5px; transition: all 0.5s; }
+.tree li::before, .tree li::after { content: ''; position: absolute; top: 0; right: 50%; border-top: 2px solid #1a237e; width: 50%; height: 20px; }
+.tree li::after { right: auto; left: 50%; border-left: 2px solid #1a237e; }
+.tree li:only-child::after, .tree li:only-child::before { display: none; }
+.tree li:only-child { padding-top: 0; }
+.tree li:first-child::before, .tree li:last-child::after { border: 0 none; }
+.tree li:last-child::before { border-right: 2px solid #1a237e; border-radius: 0 5px 0 0; }
+.tree li:first-child::after { border-radius: 5px 0 0 0; }
+.tree ul ul::before { content: ''; position: absolute; top: 0; left: 50%; border-left: 2px solid #1a237e; width: 0; height: 20px; }
+
+/* Node Styles */
+.node { display: inline-block; padding: 10px 16px; text-decoration: none; color: #fff; font-size: 13px; font-weight: 600; border-radius: 8px; box-shadow: 0 3px 8px rgba(0,0,0,0.15); transition: all 0.3s; cursor: pointer; position: relative; min-width: 90px; }
+.node:hover { transform: translateY(-3px); box-shadow: 0 6px 16px rgba(0,0,0,0.2); }
+.node .count { position: absolute; top: -8px; right: -8px; background: #ef4444; color: #fff; font-size: 10px; padding: 2px 6px; border-radius: 10px; }
+
+/* Level Colors */
+.l0 { background: linear-gradient(135deg, #1a237e, #283593); font-size: 16px; padding: 14px 28px; }
+.l1 { background: linear-gradient(135deg, #283593, #3949ab); }
+.l2 { background: linear-gradient(135deg, #3949ab, #5c6bc0); }
+.l3 { background: linear-gradient(135deg, #5c6bc0, #7986cb); font-size: 11px; padding: 8px 12px; }
+
+/* Expand/Collapse */
+.expand { position: absolute; bottom: -12px; left: 50%; transform: translateX(-50%); width: 20px; height: 20px; background: #fff; border: 2px solid #1a237e; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; color: #1a237e; cursor: pointer; transition: 0.3s; }
+.expand:hover { background: #1a237e; color: #fff; }
+.expand.collapsed::after { content: '+'; }
+.expand::after { content: '−'; }
+
+.hidden { display: none !important; }
+
+/* Legend */
+.legend { position: fixed; bottom: 20px; right: 20px; background: #fff; padding: 15px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+.legend h4 { font-size: 12px; color: #666; margin-bottom: 8px; }
+.legend-item { display: flex; align-items: center; gap: 8px; margin: 5px 0; font-size: 11px; }
+.legend-box { width: 16px; height: 16px; border-radius: 4px; }
+
+/* Controls */
+.controls { position: fixed; top: 20px; right: 20px; display: flex; gap: 8px; }
+.controls button { padding: 8px 14px; border: none; border-radius: 6px; background: #1a237e; color: #fff; font-size: 12px; cursor: pointer; transition: 0.3s; }
+.controls button:hover { background: #3949ab; }
+
+@media print {
+  body { background: #fff; }
+  .controls, .legend { display: none; }
+}
+</style>
+</head>
+<body>
+
+<div class="controls">
+  <button onclick="expandAll()">展开全部</button>
+  <button onclick="collapseAll()">折叠全部</button>
+</div>
+
+<div class="container">
+  <div class="header">
+    <h1>PBU口岸事业部组织架构图</h1>
+    <p>2026年5月 | 不含实习生、外包、蓝领</p>
+  </div>
+
+  <div class="tree" id="orgTree">
+    <ul>
+      <li>
+        <div class="node l0" onclick="toggle(this)">
+          PBU口岸事业部
+          <div class="expand"></div>
+        </div>
+        <ul>
+          <!-- 欧洲一区 -->
+          <li>
+            <div class="node l1" onclick="toggle(this)">
+              欧洲一区
+              <div class="expand"></div>
+            </div>
+            <ul>
+              <li>
+                <div class="node l2" onclick="toggle(this)">
+                  丹麦区
+                  <div class="expand"></div>
+                </div>
+                <ul>
+                  <li><div class="node l3">关务组</div></li>
+                  <li><div class="node l3">运营组</div></li>
+                  <li><div class="node l3">EMA</div></li>
+                  <li><div class="node l3">PVG</div></li>
+                </ul>
+              </li>
+              <li>
+                <div class="node l2" onclick="toggle(this)">
+                  英国区
+                  <div class="expand"></div>
+                </div>
+                <ul>
+                  <li><div class="node l3">关务组</div></li>
+                  <li><div class="node l3">运营组</div></li>
+                  <li><div class="node l3">销售部</div></li>
+                  <li><div class="node l3">操作组</div></li>
+                </ul>
+              </li>
+              <li>
+                <div class="node l2" onclick="toggle(this)">
+                  荷兰区
+                  <div class="expand"></div>
+                </div>
+                <ul>
+                  <li><div class="node l3">关务组</div></li>
+                  <li><div class="node l3">运营组</div></li>
+                  <li><div class="node l3">物流组</div></li>
+                </ul>
+              </li>
+            </ul>
+          </li>
+          <!-- 欧洲二区 -->
+          <li>
+            <div class="node l1" onclick="toggle(this)">
+              欧洲二区
+              <div class="expand"></div>
+            </div>
+            <ul>
+              <li>
+                <div class="node l2" onclick="toggle(this)">
+                  法国区
+                  <div class="expand"></div>
+                </div>
+                <ul>
+                  <li><div class="node l3">关务部</div></li>
+                  <li><div class="node l3">操作部</div></li>
+                  <li><div class="node l3">销售部</div></li>
+                  <li><div class="node l3">运营部</div></li>
+                </ul>
+              </li>
+              <li>
+                <div class="node l2" onclick="toggle(this)">
+                  比利时区
+                  <div class="expand"></div>
+                </div>
+                <ul>
+                  <li><div class="node l3">关务组</div></li>
+                  <li><div class="node l3">调度组</div></li>
+                  <li><div class="node l3">操作组</div></li>
+                  <li><div class="node l3">行政事务组</div></li>
+                </ul>
+              </li>
+            </ul>
+          </li>
+          <!-- 欧洲三区 -->
+          <li>
+            <div class="node l1" onclick="toggle(this)">
+              欧洲三区
+              <div class="expand"></div>
+            </div>
+            <ul>
+              <li>
+                <div class="node l2" onclick="toggle(this)">
+                  意大利区
+                  <div class="expand"></div>
+                </div>
+                <ul>
+                  <li><div class="node l3">关务组</div></li>
+                  <li><div class="node l3">运营组</div></li>
+                </ul>
+              </li>
+              <li>
+                <div class="node l2" onclick="toggle(this)">
+                  西班牙区
+                  <div class="expand"></div>
+                </div>
+                <ul>
+                  <li><div class="node l3">关务组</div></li>
+                  <li><div class="node l3">运营组</div></li>
+                  <li><div class="node l3">操作组</div></li>
+                </ul>
+              </li>
+              <li>
+                <div class="node l2" onclick="toggle(this)">
+                  匈牙利区
+                  <div class="expand"></div>
+                </div>
+                <ul>
+                  <li><div class="node l3">运营组</div></li>
+                </ul>
+              </li>
+            </ul>
+          </li>
+          <!-- 澳洲区 -->
+          <li>
+            <div class="node l1">澳洲区</div>
+          </li>
+          <!-- 日本区 -->
+          <li>
+            <div class="node l1">日本区</div>
+          </li>
+          <!-- 北美区 -->
+          <li>
+            <div class="node l1" onclick="toggle(this)">
+              北美区
+              <div class="expand"></div>
+            </div>
+            <ul>
+              <li><div class="node l2">运营部</div></li>
+              <li><div class="node l2">HRBP</div></li>
+            </ul>
+          </li>
+          <!-- 四海捷运项目部 -->
+          <li>
+            <div class="node l1">四海捷运项目部</div>
+          </li>
+          <!-- 经营管理部 -->
+          <li>
+            <div class="node l1" onclick="toggle(this)">
+              经营管理部
+              <div class="expand"></div>
+            </div>
+            <ul>
+              <li><div class="node l2">部门总经理</div></li>
+              <li><div class="node l2">项目管理组</div></li>
+              <li><div class="node l2">财务共享组</div></li>
+            </ul>
+          </li>
+          <!-- 销售客服部 -->
+          <li>
+            <div class="node l1" onclick="toggle(this)">
+              销售客服部
+              <div class="expand"></div>
+            </div>
+            <ul>
+              <li><div class="node l2">客户成功组</div></li>
+              <li><div class="node l2">商务支持组</div></li>
+            </ul>
+          </li>
+          <!-- 交付运营部 -->
+          <li>
+            <div class="node l1" onclick="toggle(this)">
+              交付运营部
+              <div class="expand"></div>
+            </div>
+            <ul>
+              <li><div class="node l2">国内交付组</div></li>
+              <li><div class="node l2">海外交付组</div></li>
+              <li><div class="node l2">质量管理组</div></li>
+            </ul>
+          </li>
+          <!-- PBU技术部 -->
+          <li>
+            <div class="node l1">PBU技术部</div>
+          </li>
+        </ul>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="legend">
+  <h4>层级说明</h4>
+  <div class="legend-item"><div class="legend-box l0"></div>PBU</div>
+  <div class="legend-item"><div class="legend-box l1"></div>二级部门/区域</div>
+  <div class="legend-item"><div class="legend-box l2"></div>三级部门/国家区</div>
+  <div class="legend-item"><div class="legend-box l3"></div>职能组</div>
+</div>
+
+<script>
+function toggle(node) {
+  const ul = node.parentElement.querySelector(':scope > ul');
+  const expand = node.querySelector('.expand');
+  if (!ul) return;
+  ul.classList.toggle('hidden');
+  if (expand) expand.classList.toggle('collapsed');
+}
+
+function expandAll() {
+  document.querySelectorAll('.tree ul').forEach(ul => ul.classList.remove('hidden'));
+  document.querySelectorAll('.expand').forEach(e => e.classList.remove('collapsed'));
+}
+
+function collapseAll() {
+  // Collapse all except root
+  document.querySelectorAll('.tree ul ul').forEach(ul => ul.classList.add('hidden'));
+  document.querySelectorAll('.expand').forEach(e => e.classList.add('collapsed'));
+}
+
+// Initialize: collapse level 2+
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.tree ul ul').forEach(ul => ul.classList.add('hidden'));
+  document.querySelectorAll('.expand').forEach(e => e.classList.add('collapsed'));
+});
+</script>
+
+</body>
+</html>
