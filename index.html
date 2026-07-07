@@ -620,7 +620,7 @@ function renderChanges(d){
   const hireSum=Number(ch.入职?.B)||0;
   const leaveSum=Number(ch.离职?.B)||0;
   const transSum=Number(ch.调动?.B)||0;
-  h+=`<div class="ana">▶ 人员变动分析：<br>&nbsp;&nbsp;${(d.changes_analysis||"").replace(/^▶\s*/,"")}</div>`;
+  h+=`<div class="ana">▶ 人员变动分析：<br>&nbsp;&nbsp;${(d.changes_analysis||"").replace(/^▶\s*/,"").replace(/^人员变动分析：\s*/,"")}</div>`;
   return h;
 }
 
