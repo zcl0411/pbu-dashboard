@@ -489,12 +489,14 @@ function renderActualTable(d,prevD){
 
 function renderFillTable(d){
   const data=d.fill_rate;const l3=data.level3_headers;
+  const costLabels=['销售费用','提货成本','清关成本','库操成本','管理费用','调度成本','地勤业务成本'];
   let h1='<tr><th rowspan="2" style="width:80px">指标</th>'+pbuHdr();
   let h2='<tr>';
   for(const c of so){const sc=subCols(c);h1+=`<th colspan="${sc.length}" class="hdr">${dn[c]}</th>`;for(const s of sc)h2+=`<th style="font-size:10px">${l3[s]||dl[s]}</th>`}
   h1+='</tr>';h2+='</tr>';
   let r='';
   let ei=0;for(const row of data.data){
+    if(row.label&&costLabels.includes(row.label))continue;
     const bVal=row['B'];
     const isRowRate=row.label&&row.label.includes('率');
     let pbuCell;
