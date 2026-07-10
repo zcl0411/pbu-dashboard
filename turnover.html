@@ -265,15 +265,31 @@ function computePassiveData(ad,fd){
   return{title:'被动离职',depts:pd,sum:{ts:fd.sum.ts,tr:tRt,or:tOr,wr:tWr,gr:tGr,kts:fd.sum.kts,ktr:pdktr,kor:pdktr>0?Math.round(pdktr/(fd.sum.kts+pdktr)*10000)/100:0}};
 }
 let currentMonth='jun';
+const EXCLUDED_D3=['HRAS人力综合条线','PBU HRBP Dept.','FES财经条线','PBU财务部'];
 function init(){
 let tab='active';
 const charts={};
 function D(){
   var md=monthData[currentMonth];
   if(!md)return monthData.apr.activeData;
-  if(tab==='active')return md.activeData;
-  if(tab==='full')return md.fullData||md.activeData;
-  return computePassiveData(md.activeData,md.fullData||md.activeData);
+  var raw;
+  if(tab==='active')raw=md.activeData;
+  else if(tab==='full')raw=md.fullData||md.activeData;
+  else raw=computePassiveData(md.activeData,md.fullData||md.activeData);
+  // 过滤排除部门
+  var fd=raw.depts.filter(function(x){return !EXCLUDED_D3.includes(x.d3);});
+  // 非小计/非BU部门重新计算汇总
+  var ld=fd.filter(function(x){return !x.sub&&!x.isBu;});
+  var ts=ld.reduce(function(a,b){return a+(b.w||0)+(b.g||0);},0);
+  var tr=ld.reduce(function(a,b){return a+(b.t||0);},0);
+  var rw=ld.reduce(function(a,b){return a+(b.rw||0);},0);
+  var rg=ld.reduce(function(a,b){return a+(b.rg||0);},0);
+  var kts=ld.reduce(function(a,b){return a+(b.kw||0)+(b.kg||0);},0);
+  var ktr=ld.reduce(function(a,b){return a+(b.krw||0)+(b.krg||0);},0);
+  var ns={ts:ts,tr:tr,or:ts>0?Math.round(tr/ts*10000)/100:0,wr:ts>0?Math.round(rw/ts*10000)/100:0,gr:ts>0?Math.round(rg/ts*10000)/100:0,kts:kts,ktr:ktr,kor:kts>0?Math.round(ktr/kts*10000)/100:0};
+  // 更新PBU汇总行
+  fd.forEach(function(x){if(x.isBu){x.w=ld.reduce(function(a,b){return a+(b.w||0);},0);x.g=ld.reduce(function(a,b){return a+(b.g||0);},0);x.t=tr;x.rw=rw;x.rg=rg;x.rt=tr;x.rwR=ts>0?Math.round(rw/ts*10000)/100:null;x.rgR=ts>0?Math.round(rg/ts*10000)/100:null;x.rtR=ns.or;x.kw=ld.reduce(function(a,b){return a+(b.kw||0);},0);x.kg=ld.reduce(function(a,b){return a+(b.kg||0);},0);x.kt=kts;x.krw=ld.reduce(function(a,b){return a+(b.krw||0);},0);x.krg=ld.reduce(function(a,b){return a+(b.krg||0);},0);x.krt=ktr;}});
+  return {title:raw.title,depts:fd,sum:ns};
 }
 function fr(v){return v===null||v===undefined?'-':v.toFixed(2)+'%';}
 function rc(v){return v===null||v===undefined?'rate-none':v>=10?'rate-high':v>=5?'rate-mid':'rate-low';}
